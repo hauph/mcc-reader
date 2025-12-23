@@ -1,0 +1,46 @@
+Decoded DTVCC / CEA-708 for Asset: samples/output/AXMT3111100H-S1.708 - Service: 1
+00:00:07:11 - {DLW:11111111} {DF0:PopUp-Cntrd:R1-C29:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0:VIS} {SPL:R1-C12} "I was thinking we🤮" {SPL:R0-C16} "So, for Mom"
+00:00:09:02 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C29:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C10} "I thought she didn't" {SPL:R1-C13} "want anything?"
+00:00:10:11 - {CLW:00000001}
+00:00:10:11 - {TGW:11111111}
+00:00:10:12 - {DLW:11111101} {DF0:PopUp-Cntrd:R1-C34:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R1-C8} "she doesn't want any fries?" {SPL:R0-C10} "Oh, like when she says"
+00:00:11:26 - {CLW:00000010}
+00:00:11:26 - {TGW:11111111}
+00:00:11:27 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C27:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C12} "And she eats all" {SPL:R1-C15} "our fries."
+00:00:13:08 - {CLW:00000001}
+00:00:13:08 - {TGW:11111111}
+00:00:13:09 - {DLW:11111101} {DF0:PopUp-Cntrd:R1-C35:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R1-C6} "the new iPhone 17 Pro at AT&T?" {SPL:R0-C8} "Exactly. What if we get her"
+00:00:16:28 - {CLW:00000010}
+00:00:16:28 - {TGW:11111111}
+00:00:16:29 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C32:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C7} "We can get their best deal" {SPL:R1-C13} "without needing"
+00:00:18:13 - {CLW:00000001}
+00:00:18:13 - {TGW:11111111}
+00:00:18:14 - {DLW:11111101} {DF0:PopUp-Cntrd:R0-C32:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C9} "the most expensive plan!"
+00:00:19:18 - {CLW:00000010}
+00:00:19:18 - {TGW:11111111}
+00:00:19:19 - {DLW:11111110} {DF1:PopUp-Cntrd:R0-C25:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C16} "Good call!"
+00:00:20:21 - {CLW:00000001}
+00:00:20:21 - {TGW:11111111}
+00:00:20:22 - {DLW:11111101} {DF0:PopUp-Cntrd:R1-C30:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R1-C9} "she loves her selfies!" {SPL:R0-C14} "And you know,"
+00:00:22:03 - {CLW:00000010}
+00:00:22:03 - {TGW:11111111}
+00:00:22:04 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C26:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C15} "-Who's that?" {SPL:R1-C17} "-No clue."
+00:00:24:03 - {DLW:00000001}
+00:00:25:13 - {CLW:00000000}
+00:00:25:13 - {TGW:11111111}
+00:00:25:14 - {DLW:11111101} {DF0:PopUp-Cntrd:R1-C41:Anchor-UL-V60-H0:Pen-MonoSerif:Pr-0} {SPA:Pen-[Size:Standard,Offset:Normal]:TextTag-Dialog:FontTag-Default:EdgeType-None:IT} {SPL:R1-C22} " iPhone 17 Pro on us" {SPL:R0-C26} " Get the all-new"
+00:00:26:21 - {DLW:00000010}
+00:00:29:03 - {CLW:00000000}
+00:00:29:03 - {TGW:11111111}
+00:00:29:04 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C41:Anchor-UL-V60-H0:Pen-MonoSerif:Pr-0} {SPA:Pen-[Size:Standard,Offset:Normal]:TextTag-Dialog:FontTag-Default:EdgeType-None:IT} {SPL:R1-C22} " in your old iPhone." {SPL:R0-C27} " when you trade"
+00:00:31:00 - {CLW:00000001}
+00:00:31:00 - {TGW:11111111}
+00:00:31:01 - {DLW:11111101} {DF0:PopUp-Cntrd:R0-C28:Anchor-UL-V60-H0:Pen-MonoSerif:Pr-0} {SPA:Pen-[Size:Standard,Offset:Normal]:TextTag-Dialog:FontTag-Default:EdgeType-None:IT} {SPL:R0-C14} " Any condition."
+00:00:32:15 - {CLW:00000010}
+00:00:32:15 - {TGW:11111111}
+00:00:32:16 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C29:Anchor-UL-V60-H0:Pen-MonoSerif:Pr-0} {SPA:Pen-[Size:Standard,Offset:Normal]:TextTag-Dialog:FontTag-Default:EdgeType-None:IT} {SPL:R1-C11} " plan not required." {SPL:R0-C13} " Most expensive"
+00:00:34:01 - {CLW:00000001}
+00:00:34:01 - {TGW:11111111}
+00:00:34:02 - {DLW:11111101} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V60-H0:Pen-MonoSerif:Pr-0} {SPL:R0-C19} "♩♩"
+00:00:36:23 - {CLW:00000010}
+00:00:36:23 - {TGW:11111111}

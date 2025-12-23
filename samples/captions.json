@@ -1,0 +1,621 @@
+{
+  "captions": {
+    "cea708_s1": [
+      {
+        "start": 0.0,
+        "start_timecode": "00:00:00:00",
+        "end": 1.5833333333333335,
+        "end_timecode": "00:00:01:14",
+        "text": "- 2020. - THAT'S A STRETCH."
+      },
+      {
+        "start": 1.5833333333333335,
+        "start_timecode": "00:00:01:14",
+        "end": 3.9583333333333335,
+        "end_timecode": "00:00:03:23",
+        "text": "- FINE. 2024."
+      },
+      {
+        "start": 3.9583333333333335,
+        "start_timecode": "00:00:03:23",
+        "end": 6.416666666666667,
+        "end_timecode": "00:00:06:10",
+        "text": "I WIN, WE MOVE IN THERE."
+      },
+      {
+        "start": 6.416666666666667,
+        "start_timecode": "00:00:06:10",
+        "end": 9.083333333333334,
+        "end_timecode": "00:00:09:02",
+        "text": "I'LL TAKE THE WEST WING. YOU TAKE THE EAST WING."
+      },
+      {
+        "start": 9.083333333333334,
+        "start_timecode": "00:00:09:02",
+        "end": 11.583333333333334,
+        "end_timecode": "00:00:11:14",
+        "text": "YOU CAN BE THE FIRST GENTLEMAN."
+      },
+      {
+        "start": 11.583333333333334,
+        "start_timecode": "00:00:11:14",
+        "end": 13.708333333333334,
+        "end_timecode": "00:00:13:17",
+        "text": "- ACTUALLY, THAT SOUNDS KIND OF GREAT."
+      },
+      {
+        "start": 13.708333333333334,
+        "start_timecode": "00:00:13:17",
+        "end": 15.75,
+        "end_timecode": "00:00:15:18",
+        "text": "THANKS FOR COMING WITH ME TO GET MY STUFF."
+      },
+      {
+        "start": 15.75,
+        "start_timecode": "00:00:15:18",
+        "end": 17.916666666666668,
+        "end_timecode": "00:00:17:22",
+        "text": "- HOW COULD I PASS UP AN OPPORTUNITY"
+      },
+      {
+        "start": 17.916666666666668,
+        "start_timecode": "00:00:17:22",
+        "end": 19.541666666666668,
+        "end_timecode": "00:00:19:13",
+        "text": "TO LOOK AT OUR FUTURE HOUSE?"
+      },
+      {
+        "start": 19.541666666666668,
+        "start_timecode": "00:00:19:13",
+        "end": 20.666666666666668,
+        "end_timecode": "00:00:20:16",
+        "text": "- OH, JUST REMEMBERED."
+      },
+      {
+        "start": 20.666666666666668,
+        "start_timecode": "00:00:20:16",
+        "end": 22.583333333333332,
+        "end_timecode": "00:00:22:14",
+        "text": "I KIND OF GOT YOU AN ENGAGEMENT PRESENT."
+      },
+      {
+        "start": 22.583333333333332,
+        "start_timecode": "00:00:22:14",
+        "end": 25.041666666666668,
+        "end_timecode": "00:00:25:01",
+        "text": "- IS IT A WAFFLE TOWER?"
+      },
+      {
+        "start": 25.041666666666668,
+        "start_timecode": "00:00:25:01",
+        "end": 27.041666666666668,
+        "end_timecode": "00:00:25:01",
+        "text": "- I MEAN, IT'S A LITTLE BETTER THAN THAT."
+      }
+    ],
+    "cea708_s2": [
+      {
+        "start": 0.0,
+        "start_timecode": "00:00:00:00",
+        "end": 1.625,
+        "end_timecode": "00:00:01:15",
+        "text": "-2020. -ESO ES UN ESTIRAMIENTO."
+      },
+      {
+        "start": 1.625,
+        "start_timecode": "00:00:01:15",
+        "end": 4.0,
+        "end_timecode": "00:00:04:00",
+        "text": "-Bien. 2024."
+      },
+      {
+        "start": 4.0,
+        "start_timecode": "00:00:04:00",
+        "end": 6.458333333333333,
+        "end_timecode": "00:00:06:11",
+        "text": "YO GANO, NOS MUDAMOS ALL\u00cd."
+      },
+      {
+        "start": 6.458333333333333,
+        "start_timecode": "00:00:06:11",
+        "end": 9.083333333333334,
+        "end_timecode": "00:00:09:02",
+        "text": "ME QUEDO CON EL ALA OESTE. SE TOMA EL ALA ESTE."
+      },
+      {
+        "start": 9.083333333333334,
+        "start_timecode": "00:00:09:02",
+        "end": 11.583333333333334,
+        "end_timecode": "00:00:11:14",
+        "text": "PUEDE SER EL PRIMER CABALLERO."
+      },
+      {
+        "start": 11.583333333333334,
+        "start_timecode": "00:00:11:14",
+        "end": 13.75,
+        "end_timecode": "00:00:13:18",
+        "text": "-EN REALIDAD, ESO SUENA GENIAL."
+      },
+      {
+        "start": 13.75,
+        "start_timecode": "00:00:13:18",
+        "end": 15.791666666666666,
+        "end_timecode": "00:00:15:19",
+        "text": "GRACIAS POR VENIR ONMIGO A BUSCAR MIS COSAS."
+      },
+      {
+        "start": 15.791666666666666,
+        "start_timecode": "00:00:15:19",
+        "end": 17.916666666666668,
+        "end_timecode": "00:00:17:22",
+        "text": "-\u00bfC\u00d3MO PODR\u00cdA RECHAZAR UNA OPORTUNIDAD DE"
+      },
+      {
+        "start": 17.916666666666668,
+        "start_timecode": "00:00:17:22",
+        "end": 19.583333333333332,
+        "end_timecode": "00:00:19:14",
+        "text": "VER NUESTRA FUTURA CASA?"
+      },
+      {
+        "start": 19.583333333333332,
+        "start_timecode": "00:00:19:14",
+        "end": 20.708333333333332,
+        "end_timecode": "00:00:20:17",
+        "text": "-OH, ACABO DE RECORDAR."
+      },
+      {
+        "start": 20.708333333333332,
+        "start_timecode": "00:00:20:17",
+        "end": 22.583333333333332,
+        "end_timecode": "00:00:22:14",
+        "text": "TENGO UN REGALO DE COMPROMISO."
+      },
+      {
+        "start": 22.583333333333332,
+        "start_timecode": "00:00:22:14",
+        "end": 25.083333333333332,
+        "end_timecode": "00:00:25:02",
+        "text": "-\u00bfES UNA TORRE DE GOFRES?"
+      },
+      {
+        "start": 25.083333333333332,
+        "start_timecode": "00:00:25:02",
+        "end": 26.041666666666668,
+        "end_timecode": "00:00:26:01",
+        "text": "-QUIERO DECIR, ES N POCO MEJOR"
+      },
+      {
+        "start": 26.041666666666668,
+        "start_timecode": "00:00:26:01",
+        "end": 28.041666666666668,
+        "end_timecode": "00:00:26:01",
+        "text": "QUE ESO."
+      }
+    ],
+    "cea708_s3": [
+      {
+        "start": 0.0,
+        "start_timecode": "00:00:00:00",
+        "end": 1.6666666666666665,
+        "end_timecode": "00:00:01:16",
+        "text": "-2020. -C'EST UN \u00c9TIREMENT."
+      },
+      {
+        "start": 1.6666666666666665,
+        "start_timecode": "00:00:01:16",
+        "end": 4.041666666666667,
+        "end_timecode": "00:00:04:01",
+        "text": "-Tr\u00e8s bien. 2024."
+      },
+      {
+        "start": 4.041666666666667,
+        "start_timecode": "00:00:04:01",
+        "end": 6.5,
+        "end_timecode": "00:00:06:12",
+        "text": "JE GAGNE, NOUS ENTRONS L\u00c0 DEDANS."
+      },
+      {
+        "start": 6.5,
+        "start_timecode": "00:00:06:12",
+        "end": 9.125,
+        "end_timecode": "00:00:09:03",
+        "text": "JE VAIS PRENDRE L'AILE OUEST. VOUS PRENEZ L'AILE EST."
+      },
+      {
+        "start": 9.125,
+        "start_timecode": "00:00:09:03",
+        "end": 11.625,
+        "end_timecode": "00:00:11:15",
+        "text": "VOUS POUVEZ \u00caTRE LE PREMIER GENTILHOMME."
+      },
+      {
+        "start": 11.625,
+        "start_timecode": "00:00:11:15",
+        "end": 13.75,
+        "end_timecode": "00:00:13:18",
+        "text": "-EN FAIT, \u00c7A A L'AIR G\u00c9NIAL."
+      },
+      {
+        "start": 13.75,
+        "start_timecode": "00:00:13:18",
+        "end": 14.75,
+        "end_timecode": "00:00:14:18",
+        "text": "MERCI D'\u00caTRE VENU AVEC MOI"
+      },
+      {
+        "start": 14.75,
+        "start_timecode": "00:00:14:18",
+        "end": 15.833333333333334,
+        "end_timecode": "00:00:15:20",
+        "text": "POUR R\u00c9CUP\u00c9RER MES AFFAIRES."
+      },
+      {
+        "start": 15.833333333333334,
+        "start_timecode": "00:00:15:20",
+        "end": 17.958333333333332,
+        "end_timecode": "00:00:17:23",
+        "text": "-COMMENT POURRAIS-JE LAISSER PASSER L'OCCASION DE"
+      },
+      {
+        "start": 17.958333333333332,
+        "start_timecode": "00:00:17:23",
+        "end": 19.583333333333332,
+        "end_timecode": "00:00:19:14",
+        "text": "REGARDER NOTRE FUTURE MAISON?"
+      },
+      {
+        "start": 19.583333333333332,
+        "start_timecode": "00:00:19:14",
+        "end": 20.75,
+        "end_timecode": "00:00:20:18",
+        "text": "-OH, VIENS DE ME RAPPELER."
+      },
+      {
+        "start": 20.75,
+        "start_timecode": "00:00:20:18",
+        "end": 22.625,
+        "end_timecode": "00:00:22:15",
+        "text": "J'AI EN QUELQUE SORTE UN CADEAU DE FIAN\u00c7AILLES."
+      },
+      {
+        "start": 22.625,
+        "start_timecode": "00:00:22:15",
+        "end": 25.083333333333332,
+        "end_timecode": "00:00:25:02",
+        "text": "-EST-CE QUE C'EST UNE TOUR DE GAUFRE?"
+      },
+      {
+        "start": 25.083333333333332,
+        "start_timecode": "00:00:25:02",
+        "end": 26.083333333333332,
+        "end_timecode": "00:00:26:02",
+        "text": "-JE VEUX DIRE, C'EST UN PEU MIEUX"
+      },
+      {
+        "start": 26.083333333333332,
+        "start_timecode": "00:00:26:02",
+        "end": 28.083333333333332,
+        "end_timecode": "00:00:26:02",
+        "text": "QUE \u00c7A."
+      }
+    ],
+    "cea708_s4": [
+      {
+        "start": 0.041666666666666664,
+        "start_timecode": "00:00:00:01",
+        "end": 1.7083333333333335,
+        "end_timecode": "00:00:01:17",
+        "text": "-2020. -DAS IST EINE STRECKE."
+      },
+      {
+        "start": 1.7083333333333335,
+        "start_timecode": "00:00:01:17",
+        "end": 4.083333333333333,
+        "end_timecode": "00:00:04:02",
+        "text": "-Fein. 2024."
+      },
+      {
+        "start": 4.083333333333333,
+        "start_timecode": "00:00:04:02",
+        "end": 6.541666666666667,
+        "end_timecode": "00:00:06:13",
+        "text": "ICH GEWINNE, WIR BEWEGEN."
+      },
+      {
+        "start": 6.541666666666667,
+        "start_timecode": "00:00:06:13",
+        "end": 9.166666666666666,
+        "end_timecode": "00:00:09:04",
+        "text": "ICH NEHME DEN WESTFL\u00dcGEL. SIE NEHMEN DEN OSTFL\u00dcGEL."
+      },
+      {
+        "start": 9.166666666666666,
+        "start_timecode": "00:00:09:04",
+        "end": 11.666666666666666,
+        "end_timecode": "00:00:11:16",
+        "text": "SIE K\u00d6NNEN DER ERSTE GENTLEMAN SEIN."
+      },
+      {
+        "start": 11.666666666666666,
+        "start_timecode": "00:00:11:16",
+        "end": 13.791666666666666,
+        "end_timecode": "00:00:13:19",
+        "text": "-TATS\u00c4CHLICH, DAS KLINGT IRGENDWIE TOLL."
+      },
+      {
+        "start": 13.791666666666666,
+        "start_timecode": "00:00:13:19",
+        "end": 15.875,
+        "end_timecode": "00:00:15:21",
+        "text": "VIELEN DANK F\u00dcR IHR KOMMEN MIT MIR MEINE SACHEN ZU"
+      },
+      {
+        "start": 15.875,
+        "start_timecode": "00:00:15:21",
+        "end": 18.0,
+        "end_timecode": "00:00:18:00",
+        "text": "-WIE K\u00d6NNTE ICH ENTGEHEN LASSEN EINE GELEGENHEIT,"
+      },
+      {
+        "start": 18.0,
+        "start_timecode": "00:00:18:00",
+        "end": 19.625,
+        "end_timecode": "00:00:19:15",
+        "text": "EINEN BLICK AUF UNSERE ZUKUNFT?"
+      },
+      {
+        "start": 19.625,
+        "start_timecode": "00:00:19:15",
+        "end": 20.75,
+        "end_timecode": "00:00:20:18",
+        "text": "-OH, NUR DARAN ERINNERT."
+      },
+      {
+        "start": 20.75,
+        "start_timecode": "00:00:20:18",
+        "end": 22.666666666666668,
+        "end_timecode": "00:00:22:16",
+        "text": "ICH HABE IHNEN EIN VERLOBUNGSGESCHENK."
+      },
+      {
+        "start": 22.666666666666668,
+        "start_timecode": "00:00:22:16",
+        "end": 25.125,
+        "end_timecode": "00:00:25:03",
+        "text": "-IST ES EIN WAFFEL-TURM?"
+      },
+      {
+        "start": 25.125,
+        "start_timecode": "00:00:25:03",
+        "end": 26.083333333333332,
+        "end_timecode": "00:00:26:02",
+        "text": "-ICH MEINE, ES IST EIN WENIG BESSER"
+      },
+      {
+        "start": 26.083333333333332,
+        "start_timecode": "00:00:26:02",
+        "end": 28.083333333333332,
+        "end_timecode": "00:00:26:02",
+        "text": "ALS DAS."
+      }
+    ],
+    "cea708_s5": [
+      {
+        "start": 0.08333333333333333,
+        "start_timecode": "00:00:00:02",
+        "end": 1.75,
+        "end_timecode": "00:00:01:18",
+        "text": "-2020. -ISSO \u00c9 UM EXAGERO."
+      },
+      {
+        "start": 1.75,
+        "start_timecode": "00:00:01:18",
+        "end": 4.083333333333333,
+        "end_timecode": "00:00:04:02",
+        "text": "-Tudo bem. 2024."
+      },
+      {
+        "start": 4.083333333333333,
+        "start_timecode": "00:00:04:02",
+        "end": 6.583333333333333,
+        "end_timecode": "00:00:06:14",
+        "text": "EU GANHO, N\u00d3S NOS MOVEMOS PARA L\u00c1."
+      },
+      {
+        "start": 6.583333333333333,
+        "start_timecode": "00:00:06:14",
+        "end": 9.208333333333334,
+        "end_timecode": "00:00:09:05",
+        "text": "EU VOU LEVAR A ALA OESTE. VOC\u00ca PEGA A ALA LESTE."
+      },
+      {
+        "start": 9.208333333333334,
+        "start_timecode": "00:00:09:05",
+        "end": 11.708333333333334,
+        "end_timecode": "00:00:11:17",
+        "text": "VOC\u00ca PODE SER O PRIMEIRO CAVALHEIRO."
+      },
+      {
+        "start": 11.708333333333334,
+        "start_timecode": "00:00:11:17",
+        "end": 13.833333333333334,
+        "end_timecode": "00:00:13:20",
+        "text": "-NA VERDADE, ISSO PARECE \u00d3TIMO."
+      },
+      {
+        "start": 13.833333333333334,
+        "start_timecode": "00:00:13:20",
+        "end": 15.916666666666666,
+        "end_timecode": "00:00:15:22",
+        "text": "OBRIGADO POR TERES VINDO COMIGO PARA PEGAR MINHAS COISAS."
+      },
+      {
+        "start": 15.916666666666666,
+        "start_timecode": "00:00:15:22",
+        "end": 18.041666666666668,
+        "end_timecode": "00:00:18:01",
+        "text": "-COMO EU PODERIA PASSAR UMA OPORTUNIDADE DE"
+      },
+      {
+        "start": 18.041666666666668,
+        "start_timecode": "00:00:18:01",
+        "end": 19.666666666666668,
+        "end_timecode": "00:00:19:16",
+        "text": "OLHAR PARA NOSSA FUTURA CASA?"
+      },
+      {
+        "start": 19.666666666666668,
+        "start_timecode": "00:00:19:16",
+        "end": 20.791666666666668,
+        "end_timecode": "00:00:20:19",
+        "text": "-OH, ACABEI DE LEMBRAR."
+      },
+      {
+        "start": 20.791666666666668,
+        "start_timecode": "00:00:20:19",
+        "end": 22.708333333333332,
+        "end_timecode": "00:00:22:17",
+        "text": "EU MEIO QUE TENHO UM PRESENTE DE NOIVADO."
+      },
+      {
+        "start": 22.708333333333332,
+        "start_timecode": "00:00:22:17",
+        "end": 25.166666666666668,
+        "end_timecode": "00:00:25:04",
+        "text": "-\u00c9 UMA TORRE DE WAFFLE?"
+      },
+      {
+        "start": 25.166666666666668,
+        "start_timecode": "00:00:25:04",
+        "end": 26.125,
+        "end_timecode": "00:00:26:03",
+        "text": "-QUERO DIZER, \u00c9 UM POUCO MELHOR DO"
+      },
+      {
+        "start": 26.125,
+        "start_timecode": "00:00:26:03",
+        "end": 28.125,
+        "end_timecode": "00:00:26:03",
+        "text": "QUE ISSO."
+      }
+    ],
+    "cea708_s6": [
+      {
+        "start": 0.08333333333333333,
+        "start_timecode": "00:00:00:02",
+        "end": 1.75,
+        "end_timecode": "00:00:01:18",
+        "text": "-2020. -     ."
+      },
+      {
+        "start": 1.75,
+        "start_timecode": "00:00:01:18",
+        "end": 4.125,
+        "end_timecode": "00:00:04:03",
+        "text": "- . 2024."
+      },
+      {
+        "start": 4.125,
+        "start_timecode": "00:00:04:03",
+        "end": 6.583333333333333,
+        "end_timecode": "00:00:06:14",
+        "text": "."
+      },
+      {
+        "start": 6.583333333333333,
+        "start_timecode": "00:00:06:14",
+        "end": 9.25,
+        "end_timecode": "00:00:09:06",
+        "text": ".         ."
+      },
+      {
+        "start": 9.25,
+        "start_timecode": "00:00:09:06",
+        "end": 11.75,
+        "end_timecode": "00:00:11:18",
+        "text": "."
+      },
+      {
+        "start": 11.75,
+        "start_timecode": "00:00:11:18",
+        "end": 13.875,
+        "end_timecode": "00:00:13:21",
+        "text": "--             ."
+      },
+      {
+        "start": 13.875,
+        "start_timecode": "00:00:13:21",
+        "end": 15.916666666666666,
+        "end_timecode": "00:00:15:22",
+        "text": "STUFF."
+      },
+      {
+        "start": 15.916666666666666,
+        "start_timecode": "00:00:15:22",
+        "end": 18.083333333333332,
+        "end_timecode": "00:00:18:02",
+        "text": "-"
+      },
+      {
+        "start": 18.083333333333332,
+        "start_timecode": "00:00:18:02",
+        "end": 19.708333333333332,
+        "end_timecode": "00:00:19:17",
+        "text": "?"
+      },
+      {
+        "start": 19.708333333333332,
+        "start_timecode": "00:00:19:17",
+        "end": 20.833333333333332,
+        "end_timecode": "00:00:20:20",
+        "text": "-       ."
+      },
+      {
+        "start": 20.833333333333332,
+        "start_timecode": "00:00:20:20",
+        "end": 22.75,
+        "end_timecode": "00:00:22:18",
+        "text": "."
+      },
+      {
+        "start": 22.75,
+        "start_timecode": "00:00:22:18",
+        "end": 25.208333333333332,
+        "end_timecode": "00:00:25:05",
+        "text": "-   F     ?"
+      },
+      {
+        "start": 25.208333333333332,
+        "start_timecode": "00:00:25:05",
+        "end": 26.958333333333332,
+        "end_timecode": "00:00:26:23",
+        "text": "-           ."
+      },
+      {
+        "start": 26.958333333333332,
+        "start_timecode": "00:00:26:23",
+        "end": 28.958333333333332,
+        "end_timecode": "00:00:26:23",
+        "text": "["
+      }
+    ]
+  },
+  "metadata": {
+    "fps": 24.0,
+    "source_dir": "samples/output",
+    "input_file": "samples/BigBuckBunny_256x144-24fps.mcc",
+    "output_files": [
+      "samples/output/BigBuckBunny_256x144-24fps-C1.608",
+      "samples/output/BigBuckBunny_256x144-24fps-C3.608",
+      "samples/output/BigBuckBunny_256x144-24fps-S6.708",
+      "samples/output/BigBuckBunny_256x144-24fps-S5.708",
+      "samples/output/BigBuckBunny_256x144-24fps-S4.708",
+      "samples/output/BigBuckBunny_256x144-24fps-S1.708",
+      "samples/output/BigBuckBunny_256x144-24fps-S3.708",
+      "samples/output/BigBuckBunny_256x144-24fps-S2.708",
+      "samples/output/BigBuckBunny_256x144-24fps.ccd",
+      "samples/output/BigBuckBunny_256x144-24fps.dbg"
+    ]
+  }
+}

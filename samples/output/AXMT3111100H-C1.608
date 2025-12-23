@@ -1,0 +1,33 @@
+Decoded Line 21 / CEA-608 for Asset: samples/output/AXMT3111100H-C1 - Channel: 1
+00:00:07:09 - {RDC} {R14:C8} {TO3} "So, for Mom" {R15:C4} {TO3} "I was thinking we " {R4:Yellow}
+00:00:08:09 - {RCL} {ENM} {R14:C4} {TO2} "I thought she didn't" {R15:C8} {TO1} "want anything?"
+00:00:09:02 - {EOC}
+00:00:09:11 - {RCL} {ENM} {R14:C4} "Oh, like when she says" {R15:C0} {TO2} "she doesn't want any fries?"
+00:00:10:11 - {EOC}
+00:00:11:08 - {RCL} {ENM} {R14:C8} "And she eats all" {R15:C8} {TO3} "our fries."
+00:00:11:26 - {EOC}
+00:00:12:04 - {RCL} {ENM} {R14:C0} {TO3} "Exactly. What if we get her" {R15:C0} {TO1} "the new iPhone 17 Pro at AT&T?"
+00:00:13:09 - {EOC}
+00:00:16:02 - {RCL} {ENM} {R14:C0} {TO3} "We can get their best deal" {R15:C8} {TO1} "without needing"
+00:00:16:29 - {EOC}
+00:00:17:29 - {RCL} {ENM} {R15:C4} "the most expensive plan!"
+00:00:18:14 - {EOC}
+00:00:19:10 - {RCL} {ENM} {R15:C8} {TO3} "Good call!"
+00:00:19:19 - {EOC}
+00:00:19:27 - {RCL} {ENM} {R14:C8} {TO2} "And you know," {R15:C4} {TO1} "she loves her selfies!"
+00:00:20:21 - {EOC}
+00:00:22:04 - {EDM}
+00:00:23:18 - {RCL} {ENM} {R14:C8} {TO2} "-Who's that?" {R15:C12} "-No clue."
+00:00:24:04 - {EOC}
+00:00:25:14 - {EDM}
+00:00:25:27 - {RCL} {ENM} {R13:C16} {FG-Italic-White} "Get the all-new" {R14:C12} {FG-Italic-White} "iPhone 17 Pro on us"
+00:00:26:21 - {EOC}
+00:00:28:10 - {RCL} {ENM} {R13:C16} {TO1} {FG-Italic-White} "when you trade" {R14:C12} {FG-Italic-White} "in your old iPhone."
+00:00:29:04 - {EOC}
+00:00:30:19 - {RCL} {ENM} {R13:C8} {FG-Italic-White} "Any condition."
+00:00:31:00 - {EOC}
+00:00:31:22 - {RCL} {ENM} {R13:C8} {FG-Italic-White} "Most expensive" {R14:C4} {TO2} {FG-Italic-White} "plan not required."
+00:00:32:15 - {EOC}
+00:00:33:25 - {RCL} {ENM} {R13:C12} {TO3} {R2:C12:UL} {R2:C12:UL} {R2:C12:UL}
+00:00:34:02 - {EOC}
+00:00:36:24 - {EDM}
