@@ -22,6 +22,12 @@ import sys
 from typing import Any, Dict, List, Tuple, Optional
 
 
+from constants import (
+    CEA608_FORMAT,
+    CEA708_FORMAT,
+)
+
+
 def parse_ccd_metadata(output_dir: str) -> Tuple[Optional[float], Optional[bool]]:
     """
     Parse the .ccd file to extract Frame Rate and Drop Frame values.
@@ -332,7 +338,10 @@ def parse_caption_files(output_dir: str, fps: float = None) -> Dict[str, Any]:
         actual_drop_frame = False
 
     result = {
-        "captions": {},
+        "captions": {
+            CEA608_FORMAT: {},
+            CEA708_FORMAT: {},
+        },
         "metadata": {
             "fps": actual_fps,
             "drop_frame": actual_drop_frame,
@@ -345,22 +354,22 @@ def parse_caption_files(output_dir: str, fps: float = None) -> Dict[str, Any]:
         filename = os.path.basename(f608)
         # Extract channel info from filename (e.g., "BigBuckBunny-C1.608" -> "cea608_c1")
         channel_match = re.search(r"-C(\d+)\.608$", filename)
-        channel = f"cea608_c{channel_match.group(1)}" if channel_match else "cea608"
+        channel = f"c{channel_match.group(1)}" if channel_match else None
 
         captions = parse_608_file(f608, actual_fps, actual_drop_frame)
-        if captions:
-            result["captions"][channel] = captions
+        if captions and channel:
+            result["captions"][CEA608_FORMAT][channel] = captions
 
     # Parse CEA-708 files (*.708)
     for f708 in sorted(glob.glob(os.path.join(output_dir, "*.708"))):
         filename = os.path.basename(f708)
         # Extract service info from filename (e.g., "BigBuckBunny-S1.708" -> "cea708_s1")
         service_match = re.search(r"-S(\d+)\.708$", filename)
-        service = f"cea708_s{service_match.group(1)}" if service_match else "cea708"
+        service = f"s{service_match.group(1)}" if service_match else None
 
         captions = parse_708_file(f708, actual_fps, actual_drop_frame)
-        if captions:
-            result["captions"][service] = captions
+        if captions and service:
+            result["captions"][CEA708_FORMAT][service] = captions
 
     return result
 
@@ -442,10 +451,10 @@ Examples:
 Output format (similar to pycaption):
     {
       "captions": {
-        "cea608_c1": [
+        "c1": [
           {"start": 0.0, "end": 2.5, "text": "Hello world", ...}
         ],
-        "cea708_s1": [...]
+        "s1": [...]
       },
       "metadata": {...}
     }

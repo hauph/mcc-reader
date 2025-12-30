@@ -1,0 +1,2 @@
+CEA608_FORMAT = "cea608"
+CEA708_FORMAT = "cea708"

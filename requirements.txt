@@ -1,2 +1,1 @@
-langdetect>=1.0.9
-
+lingua-language-detector>=2.0.0
