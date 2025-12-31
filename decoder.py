@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
 """
-MCC Decoder - Decode MCC (MacCaption) files using Caption Inspector.
-
-Usage:
-    python MCCDecoder.py <input_file> [-o output_dir]
-    python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc
-
-Docker usage:
-    docker build -t mcc-decoder .
-    docker run -v $(pwd)/samples:/app/samples mcc-decoder python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc -o samples/output
+Decode MCC (MacCaption) files using Caption Inspector.
 """
 
 import glob
-import json
 import os
 import re
 import subprocess
-import argparse
-import sys
+# import json
+# import argparse
+# import sys
 
 from typing import Any, Dict, List, Tuple, Optional
 
@@ -25,6 +17,7 @@ from typing import Any, Dict, List, Tuple, Optional
 from constants import (
     CEA608_FORMAT,
     CEA708_FORMAT,
+    TEMP_OUTPUT_DIR,
 )
 
 
@@ -374,26 +367,93 @@ def parse_caption_files(output_dir: str, fps: float = None) -> Dict[str, Any]:
     return result
 
 
+def parse_debug_file(output_dir: str) -> Dict[str, List[Dict[str, str]]]:
+    """
+    Parse a debug file from Caption Inspector and extract warnings, errors, fatals, and asserts.
+
+    Args:
+        output_dir: Directory containing the debug file
+
+    Returns:
+        Dictionary with 'warnings', 'errors', 'fatals', and 'asserts' lists,
+        each containing dicts with 'category', 'source', and 'message' keys.
+    """
+    dbg_files = glob.glob(os.path.join(output_dir, "*.dbg"))
+    if not dbg_files:
+        return {"warnings": [], "errors": [], "fatals": [], "asserts": []}
+
+    debug_file = dbg_files[0]
+
+    result = {
+        "warnings": [],
+        "errors": [],
+        "fatals": [],
+        "asserts": [],
+    }
+
+    # Pattern: LEVEL CATEGORY [source:line] - message
+    # Example: WARN DBG_708_DEC [dtvcc_decode.c:342] - Mismatch in Packet length...
+    pattern = re.compile(
+        r"^(WARN|ERROR|FATAL|ASSERT)\s+(\S+)\s+\[([^\]]+)\]\s+-\s+(.*)$"
+    )
+
+    with open(debug_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            match = pattern.match(line)
+            if match:
+                level = match.group(1)
+                category = match.group(2)
+                source = match.group(3)
+                message = match.group(4)
+
+                entry = {
+                    "category": category,
+                    "source": source,
+                    "message": message,
+                }
+
+                if level == "WARN":
+                    result["warnings"].append(entry)
+                elif level == "ERROR":
+                    result["errors"].append(entry)
+                elif level == "FATAL":
+                    result["fatals"].append(entry)
+                elif level == "ASSERT":
+                    result["asserts"].append(entry)
+
+    return result
+
+
 def decode_mcc_file(
-    mcc_file_path: str, output_dir: str = None, fps: float = None
+    mcc_file_path: str,
+    output_dir: str = None,
+    fps: float = None,
+    get_debug_data: bool = False,
 ) -> Dict[str, Any]:
     """
     Decode an MCC file using Caption Inspector and parse results to JSON.
 
     Args:
-        mcc_file_path: Path to the MCC file
-        output_dir: Optional output directory for decoded files
-        fps: Optional override for frames per second. If None, extracts from .ccd file.
-
+        - mcc_file_path: Path to the MCC file
+        - output_dir: Optional output directory for decoded files. If None, uses "/tmp/caption_output". If "/tmp/caption_output", the output directory will be cleaned up after the function returns. If a custom directory is provided, it will not be cleaned up.
+        - fps: Optional override for frames per second. If None, extracts from .ccd file.
+        - get_debug_data: Whether to get debug data from the debug file.
     Returns:
         dict: Parsed caption data in pycaption-like format
     """
     if not os.path.exists(mcc_file_path):
         raise FileNotFoundError(f"MCC file not found: {mcc_file_path}")
 
+    if not mcc_file_path.endswith(".mcc"):
+        raise ValueError(f"MCC file must have .mcc extension: {mcc_file_path}")
+
     # Default output directory
     if output_dir is None:
-        output_dir = "/tmp/caption_output"
+        output_dir = TEMP_OUTPUT_DIR
 
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -435,81 +495,91 @@ def decode_mcc_file(
     parsed_data["metadata"]["input_file"] = mcc_file_path
     parsed_data["metadata"]["output_files"] = output_files
 
+    if get_debug_data:
+        debug_data = parse_debug_file(output_dir)
+        parsed_data["debug"] = debug_data
+
+    if output_dir == TEMP_OUTPUT_DIR:
+        # Clean up the temporary output directory
+        import shutil
+
+        shutil.rmtree(output_dir)
+
     return parsed_data
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Decode MCC files using Caption Inspector and output as JSON",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-    python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc
-    python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc -o samples/output
-    python MCCDecoder.py input.mcc -o /tmp/decoded --pretty --fps 29.97
+# def main():
+#     parser = argparse.ArgumentParser(
+#         description="Decode MCC files using Caption Inspector and output as JSON",
+#         formatter_class=argparse.RawDescriptionHelpFormatter,
+#         epilog="""
+# Examples:
+#     python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc
+#     python MCCDecoder.py samples/BigBuckBunny_256x144-24fps.mcc -o samples/output
+#     python MCCDecoder.py input.mcc -o /tmp/decoded --pretty --fps 29.97
 
-Output format (similar to pycaption):
-    {
-      "captions": {
-        "c1": [
-          {"start": 0.0, "end": 2.5, "text": "Hello world", ...}
-        ],
-        "s1": [...]
-      },
-      "metadata": {...}
-    }
-        """,
-    )
-    parser.add_argument("input_file", help="Path to the MCC file to decode")
-    parser.add_argument(
-        "-o", "--output", dest="output_dir", help="Output directory for decoded files"
-    )
-    parser.add_argument(
-        "--pretty", action="store_true", help="Pretty print JSON output"
-    )
-    parser.add_argument(
-        "--fps",
-        type=float,
-        default=None,
-        help="Override frames per second (auto-detected from .ccd file if not specified)",
-    )
-    parser.add_argument(
-        "--save-json", dest="save_json", help="Save JSON output to file"
-    )
+# Output format (similar to pycaption):
+#     {
+#       "captions": {
+#         "c1": [
+#           {"start": 0.0, "end": 2.5, "text": "Hello world", ...}
+#         ],
+#         "s1": [...]
+#       },
+#       "metadata": {...}
+#     }
+#         """,
+#     )
+#     parser.add_argument("input_file", help="Path to the MCC file to decode")
+#     parser.add_argument(
+#         "-o", "--output", dest="output_dir", help="Output directory for decoded files"
+#     )
+#     parser.add_argument(
+#         "--pretty", action="store_true", help="Pretty print JSON output"
+#     )
+#     parser.add_argument(
+#         "--fps",
+#         type=float,
+#         default=None,
+#         help="Override frames per second (auto-detected from .ccd file if not specified)",
+#     )
+#     parser.add_argument(
+#         "--save-json", dest="save_json", help="Save JSON output to file"
+#     )
 
-    args = parser.parse_args()
+#     args = parser.parse_args()
 
-    try:
-        print(f"Decoding MCC file: {args.input_file}")
-        result = decode_mcc_file(args.input_file, args.output_dir, args.fps)
+#     try:
+#         print(f"Decoding MCC file: {args.input_file}")
+#         result = decode_mcc_file(args.input_file, args.output_dir, args.fps)
 
-        # Print summary
-        print(f"\nFound {len(result['captions'])} caption tracks:")
-        for track, captions in result["captions"].items():
-            print(f"  - {track}: {len(captions)} captions")
+#         # Print summary
+#         print(f"\nFound {len(result['captions'])} caption tracks:")
+#         for track, captions in result["captions"].items():
+#             print(f"  - {track}: {len(captions)} captions")
 
-        # Print JSON result
-        json_output = json.dumps(result, indent=2 if args.pretty else None, default=str)
-        print(f"\n{json_output}")
+#         # Print JSON result
+#         json_output = json.dumps(result, indent=2 if args.pretty else None, default=str)
+#         print(f"\n{json_output}")
 
-        # Save to file if requested
-        if args.save_json:
-            with open(args.save_json, "w") as f:
-                f.write(json_output)
-            print(f"\nJSON saved to: {args.save_json}")
+#         # Save to file if requested
+#         if args.save_json:
+#             with open(args.save_json, "w") as f:
+#                 f.write(json_output)
+#             print(f"\nJSON saved to: {args.save_json}")
 
-        return 0
+#         return 0
 
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
-        return 1
+#     except FileNotFoundError as e:
+#         print(f"Error: {e}", file=sys.stderr)
+#         return 1
+#     except RuntimeError as e:
+#         print(f"Error: {e}", file=sys.stderr)
+#         return 1
+#     except Exception as e:
+#         print(f"Unexpected error: {e}", file=sys.stderr)
+#         return 1
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+# if __name__ == "__main__":
+#     sys.exit(main())

@@ -18,6 +18,7 @@ class MCCReader:
         self.fps = None
         self.drop_frame = None
         self.languages = None
+        self.formats = None
         self._languages_to_tracks = {
             CEA608_FORMAT: {},
             CEA708_FORMAT: {},
@@ -27,22 +28,37 @@ class MCCReader:
             CEA708_FORMAT: {},
         }
 
-    def read(self, file_path: str):
-        result = decode_mcc_file(file_path)
+    def read(self, file_path: str, output_dir: str = None):
+        result = decode_mcc_file(file_path, output_dir=output_dir)
         self.captions = result["captions"]
         self.fps = result["metadata"]["fps"]
         self.drop_frame = result["metadata"].get("drop_frame", False)
         self.tracks = self._get_available_tracks()
         self.languages = self._detect_languages()
+        self.formats = self._get_available_formats()
 
     def get_captions(self, format: str = None, language: str = None):
         """
         Get captions for a specific track or all captions.
+
+        Args:
+            format: The format of the captions to get.
+            language: The language of the captions to get.
+
+        Returns:
+            The captions for the specified format and language or all captions.
         """
+        if self.captions is None:
+            raise ValueError("No captions found, please read the file first")
+
         if format is None:
+            print("No format provided, returning all captions")
             return self.captions
         elif format is not None:
-            tracks = self.get_tracks(format)
+            all_formats = self.get_formats()
+            if format not in all_formats:
+                raise ValueError(f"Format {format} not found")
+
             if language is not None:
                 track_from_language = self._languages_to_tracks.get(format).get(
                     language
@@ -50,11 +66,16 @@ class MCCReader:
                 if track_from_language is not None:
                     return self.captions.get(format).get(track_from_language[0])
                 else:
-                    print(f"No track found for language {language} in format {format}")
+                    raise ValueError(
+                        f"No track found for language {language} in format {format}"
+                    )
             else:
+                tracks = self.get_tracks(format)
                 if tracks is not None and len(tracks) > 0:
+                    # To make it simpler, always return the first track
                     return self.captions.get(format).get(tracks[0])
                 else:
+                    print(f"No track found for format {format}, returning all tracks")
                     return self.captions.get(format)
 
     def get_tracks(self, format: str = None):
@@ -65,16 +86,20 @@ class MCCReader:
             Dictionary with cea608 and cea708 lists.
             Example: {"cea608": ["c1", "c3"], "cea708": ["s1", "s2"]}
         """
+        if self.tracks is None:
+            print("No tracks found, getting available tracks ...")
+            self.tracks = self._get_available_tracks()
+
         if format is None:
+            print("No format provided, returning all tracks")
             return self.tracks
-        return self.tracks.get(format)
+        else:
+            print(f"Returning tracks for format {format}")
+            return self.tracks.get(format)
 
     def get_languages(self, format: str = None):
         """
         Get detected languages for each track.
-
-        Uses language detection on caption text to determine the language.
-        Requires the 'langdetect' package: pip install langdetect
 
         Returns:
             Dictionary mapping track names to detected language codes.
@@ -83,9 +108,16 @@ class MCCReader:
                 "cea708": {"s1": "en", "s2": "es", "s3": "fr"}
             }
         """
+        if self.languages is None:
+            print("No languages found, detecting languages ...")
+            self.languages = self._detect_languages()
+
         if format is None:
+            print("No format provided, returning all languages")
             return self.languages
-        return self.languages.get(format)
+        else:
+            print(f"Returning languages for format {format}")
+            return self.languages.get(format)
 
     def get_fps(self):
         return self.fps
@@ -94,6 +126,15 @@ class MCCReader:
         return self.drop_frame
 
     def get_formats(self):
+        if self.formats is None:
+            print("No formats found, getting available formats ...")
+            self.formats = self._get_available_formats()
+        return self.formats
+
+    def _get_available_formats(self):
+        if self.captions is None:
+            raise ValueError("No captions found, please read the file first")
+
         formats = []
         for format_name in self.captions.keys():
             if format_name == CEA608_FORMAT and format_name not in formats:
@@ -104,18 +145,21 @@ class MCCReader:
 
     def _detect_languages(self):
         """
-        Detect languages for all caption tracks using langdetect.
+        Detect languages for all caption tracks using lingua-language-detector.
 
         Returns:
             Dictionary with detected languages per track.
         """
+        if self.captions is None:
+            raise ValueError("No captions found, please read the file first")
+
         result = {
             CEA608_FORMAT: [],
             CEA708_FORMAT: [],
         }
 
-        for format_name in self.captions.keys():
-            for track_name in self.captions[format_name].keys():
+        for format_name in self.get_formats():
+            for track_name in self.get_tracks(format_name):
                 captions = self.captions[format_name][track_name]
                 full_text = ""
                 for caption in captions:
@@ -150,24 +194,20 @@ class MCCReader:
             Dictionary with cea608 and cea708 lists containing available track identifiers.
             Example: {"cea608": ["c1", "c3"], "cea708": ["s1", "s2", "s3"]}
         """
-        # Handle both full result dict and just the captions sub-dict
-        caption_tracks = self.captions
+        if self.captions is None:
+            raise ValueError("No captions found, please read the file first")
 
-        result = {
-            CEA608_FORMAT: [],
-            CEA708_FORMAT: [],
-        }
+        caption_tracks = self.get_captions()
+
+        result = {}
 
         for format_name in caption_tracks.keys():
-            if format_name == CEA608_FORMAT:
-                for track_name in caption_tracks[format_name].keys():
-                    result[CEA608_FORMAT].append(track_name)
-            elif format_name == CEA708_FORMAT:
-                for track_name in caption_tracks[format_name].keys():
-                    result[CEA708_FORMAT].append(track_name)
+            result[format_name] = []
+            for track_name in caption_tracks[format_name].keys():
+                result[format_name].append(track_name)
 
         # Sort for consistent ordering
-        result[CEA608_FORMAT].sort()
-        result[CEA708_FORMAT].sort()
+        for format_name in result.keys():
+            result[format_name].sort()
 
         return result

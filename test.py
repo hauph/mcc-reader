@@ -1,10 +1,30 @@
-import MCCReader
+from MCCReader import MCCReader
 
-reader = MCCReader.MCCReader()
-reader.read("samples/BigBuckBunny_256x144-24fps.mcc")
-print("Languages: ", reader.get_languages())
-print("Tracks: ", reader.get_tracks())
-print("Formats: ", reader.get_formats())
-print("Languages to tracks: ", reader._languages_to_tracks)
-print("Tracks to languages: ", reader._tracks_to_languages)
-print("Captions: ", reader.get_captions())
+reader = MCCReader()
+reader.read("samples/BigBuckBunny_256x144-24fps.mcc", output_dir="samples/output")
+# print("Tracks: ", reader.get_tracks())
+# print("Tracks: ", reader.get_tracks("cea608"))
+
+# print("Languages: ", reader.get_languages())
+# print("Languages: ", reader.get_languages("cea608"))
+
+# print("Formats: ", reader.get_formats())
+
+# print("fps: ", reader.get_fps())
+# print("Drop Frame: ", reader.get_drop_frame())
+
+# print("Languages to tracks: ", reader._languages_to_tracks)
+# print("Tracks to languages: ", reader._tracks_to_languages)
+
+# print("Captions - Default: ", reader.get_captions())
+# print("Captions - With format: ", reader.get_captions(format="cea608"))
+# print("Captions - Wrong format: ", reader.get_captions(format="ebustl"))
+# print(
+#     "Captions - Format and Language: ",
+#     reader.get_captions(format="cea608", language="es"),
+# )
+# print("Captions - Language without format: ", reader.get_captions(language="en"))
+# print(
+#     "Captions - Wrong Language: ",
+#     reader.get_captions(format="cea708", language="vn"),
+# )
