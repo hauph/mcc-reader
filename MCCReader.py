@@ -1,3 +1,4 @@
+from typing import List
 from decoder import decode_mcc_file
 
 from lingua import LanguageDetectorBuilder
@@ -5,6 +6,7 @@ from lingua import LanguageDetectorBuilder
 from constants import (
     CEA608_FORMAT,
     CEA708_FORMAT,
+    CaptionFormat,
 )
 
 # Build language detector once (supports common caption languages)
@@ -19,6 +21,8 @@ class MCCReader:
         self.drop_frame = None
         self.languages = None
         self.formats = None
+        self.result = None
+        self.debug_metadata = None
         self._languages_to_tracks = {
             CEA608_FORMAT: {},
             CEA708_FORMAT: {},
@@ -30,14 +34,16 @@ class MCCReader:
 
     def read(self, file_path: str, output_dir: str = None):
         result = decode_mcc_file(file_path, output_dir=output_dir)
+        self.result = result
         self.captions = result["captions"]
+        self.debug_metadata = result["metadata"]["debug"]
         self.fps = result["metadata"]["fps"]
         self.drop_frame = result["metadata"].get("drop_frame", False)
         self.tracks = self._get_available_tracks()
         self.languages = self._detect_languages()
         self.formats = self._get_available_formats()
 
-    def get_captions(self, format: str = None, language: str = None):
+    def get_captions(self, format: CaptionFormat = None, language: str = None):
         """
         Get captions for a specific track or all captions.
 
@@ -48,8 +54,7 @@ class MCCReader:
         Returns:
             The captions for the specified format and language or all captions.
         """
-        if self.captions is None:
-            raise ValueError("No captions found, please read the file first")
+        self._raise_error_if_captions_is_none()
 
         if format is None:
             print("No format provided, returning all captions")
@@ -78,7 +83,7 @@ class MCCReader:
                     print(f"No track found for format {format}, returning all tracks")
                     return self.captions.get(format)
 
-    def get_tracks(self, format: str = None):
+    def get_tracks(self, format: CaptionFormat = None):
         """
         Get available caption tracks grouped by standard.
 
@@ -97,7 +102,7 @@ class MCCReader:
             print(f"Returning tracks for format {format}")
             return self.tracks.get(format)
 
-    def get_languages(self, format: str = None):
+    def get_languages(self, format: CaptionFormat = None):
         """
         Get detected languages for each track.
 
@@ -131,15 +136,34 @@ class MCCReader:
             self.formats = self._get_available_formats()
         return self.formats
 
-    def _get_available_formats(self):
-        if self.captions is None:
-            raise ValueError("No captions found, please read the file first")
+    def get_debug_metadata(self):
+        return self.debug_metadata
 
-        formats = []
+    def get_original_result(self):
+        return self.result
+
+    @staticmethod
+    def detect(content: str) -> bool:
+        """Simple check to validate whether the given content is a proper MCC file by checking its header.
+
+        Args:
+            content: The content of the file to check.
+
+        Returns:
+            True if the content is a proper MCC file, False otherwise.
+        """
+        lines = content.splitlines()
+        if lines[0].startswith("File Format=MacCaption_MCC"):
+            return True
+        else:
+            return False
+
+    def _get_available_formats(self):
+        self._raise_error_if_captions_is_none()
+
+        formats: List[CaptionFormat] = []
         for format_name in self.captions.keys():
-            if format_name == CEA608_FORMAT and format_name not in formats:
-                formats.append(format_name)
-            elif format_name == CEA708_FORMAT and format_name not in formats:
+            if format_name not in formats:
                 formats.append(format_name)
         return formats
 
@@ -150,8 +174,7 @@ class MCCReader:
         Returns:
             Dictionary with detected languages per track.
         """
-        if self.captions is None:
-            raise ValueError("No captions found, please read the file first")
+        self._raise_error_if_captions_is_none()
 
         result = {
             CEA608_FORMAT: [],
@@ -194,8 +217,7 @@ class MCCReader:
             Dictionary with cea608 and cea708 lists containing available track identifiers.
             Example: {"cea608": ["c1", "c3"], "cea708": ["s1", "s2", "s3"]}
         """
-        if self.captions is None:
-            raise ValueError("No captions found, please read the file first")
+        self._raise_error_if_captions_is_none()
 
         caption_tracks = self.get_captions()
 
@@ -211,3 +233,7 @@ class MCCReader:
             result[format_name].sort()
 
         return result
+
+    def _raise_error_if_captions_is_none(self):
+        if self.captions is None:
+            raise ValueError("No captions found, please read the file first")

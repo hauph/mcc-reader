@@ -18,6 +18,7 @@ from constants import (
     CEA608_FORMAT,
     CEA708_FORMAT,
     TEMP_OUTPUT_DIR,
+    DEBUG_LEVELS,
 )
 
 
@@ -369,32 +370,26 @@ def parse_caption_files(output_dir: str, fps: float = None) -> Dict[str, Any]:
 
 def parse_debug_file(output_dir: str) -> Dict[str, List[Dict[str, str]]]:
     """
-    Parse a debug file from Caption Inspector and extract warnings, errors, fatals, and asserts.
+    Parse a debug file from Caption Inspector and extract all levels (UNKNOWN_DEBUG_LEVEL, VERBOSE, INFO, WARN, ERROR, FATAL, and ASSERT) in their original order.
 
     Args:
         output_dir: Directory containing the debug file
 
     Returns:
-        Dictionary with 'warnings', 'errors', 'fatals', and 'asserts' lists,
-        each containing dicts with 'category', 'source', and 'message' keys.
+        List of dictionaries with 'category', 'source', and 'message' keys.
     """
     dbg_files = glob.glob(os.path.join(output_dir, "*.dbg"))
     if not dbg_files:
-        return {"warnings": [], "errors": [], "fatals": [], "asserts": []}
+        return []
 
     debug_file = dbg_files[0]
 
-    result = {
-        "warnings": [],
-        "errors": [],
-        "fatals": [],
-        "asserts": [],
-    }
+    result: List[Dict[str, str]] = []
 
     # Pattern: LEVEL CATEGORY [source:line] - message
     # Example: WARN DBG_708_DEC [dtvcc_decode.c:342] - Mismatch in Packet length...
     pattern = re.compile(
-        r"^(WARN|ERROR|FATAL|ASSERT)\s+(\S+)\s+\[([^\]]+)\]\s+-\s+(.*)$"
+        r"^(" + "|".join(DEBUG_LEVELS) + ")\s+(\S+)\s+\[([^\]]+)\]\s+-\s+(.*)$"
     )
 
     with open(debug_file, "r") as f:
@@ -411,19 +406,13 @@ def parse_debug_file(output_dir: str) -> Dict[str, List[Dict[str, str]]]:
                 message = match.group(4)
 
                 entry = {
+                    "level": level,
                     "category": category,
                     "source": source,
                     "message": message,
                 }
 
-                if level == "WARN":
-                    result["warnings"].append(entry)
-                elif level == "ERROR":
-                    result["errors"].append(entry)
-                elif level == "FATAL":
-                    result["fatals"].append(entry)
-                elif level == "ASSERT":
-                    result["asserts"].append(entry)
+                result.append(entry)
 
     return result
 
@@ -432,7 +421,6 @@ def decode_mcc_file(
     mcc_file_path: str,
     output_dir: str = None,
     fps: float = None,
-    get_debug_data: bool = False,
 ) -> Dict[str, Any]:
     """
     Decode an MCC file using Caption Inspector and parse results to JSON.
@@ -441,7 +429,6 @@ def decode_mcc_file(
         - mcc_file_path: Path to the MCC file
         - output_dir: Optional output directory for decoded files. If None, uses "/tmp/caption_output". If "/tmp/caption_output", the output directory will be cleaned up after the function returns. If a custom directory is provided, it will not be cleaned up.
         - fps: Optional override for frames per second. If None, extracts from .ccd file.
-        - get_debug_data: Whether to get debug data from the debug file.
     Returns:
         dict: Parsed caption data in pycaption-like format
     """
@@ -450,6 +437,23 @@ def decode_mcc_file(
 
     if not mcc_file_path.endswith(".mcc"):
         raise ValueError(f"MCC file must have .mcc extension: {mcc_file_path}")
+
+    content = None
+    try:
+        # Try the best standard first (handles BOMs automatically)
+        with open(mcc_file_path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except UnicodeDecodeError:
+        # Fallback to Latin-1, which reads *any* byte without crashing
+        with open(mcc_file_path, "r", encoding="latin-1") as f:
+            content = f.read()
+
+    if not content:
+        raise ValueError(f"MCC file has no content: {mcc_file_path}")
+    if not content.startswith("File Format=MacCaption_MCC"):
+        raise ValueError(
+            f'MCC file has no proper header "File Format=MacCaption_MCC": {mcc_file_path}'
+        )
 
     # Default output directory
     if output_dir is None:
@@ -495,9 +499,8 @@ def decode_mcc_file(
     parsed_data["metadata"]["input_file"] = mcc_file_path
     parsed_data["metadata"]["output_files"] = output_files
 
-    if get_debug_data:
-        debug_data = parse_debug_file(output_dir)
-        parsed_data["debug"] = debug_data
+    debug_data = parse_debug_file(output_dir)
+    parsed_data["metadata"]["debug"] = debug_data
 
     if output_dir == TEMP_OUTPUT_DIR:
         # Clean up the temporary output directory

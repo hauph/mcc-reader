@@ -1,7 +1,9 @@
 from MCCReader import MCCReader
 
 reader = MCCReader()
-reader.read("samples/BigBuckBunny_256x144-24fps.mcc", output_dir="samples/output")
+reader.read("samples/AXMT3111100H.mcc", output_dir="samples/output")
+# print("Debug metadata: ", reader.get_debug_metadata())
+# print("Original result: ", reader.get_original_result())
 # print("Tracks: ", reader.get_tracks())
 # print("Tracks: ", reader.get_tracks("cea608"))
 
