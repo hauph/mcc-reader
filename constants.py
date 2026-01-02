@@ -1,15 +1,16 @@
 from enum import Enum
 
+CEA608_FORMAT = "cea608"
+CEA708_FORMAT = "cea708"
+
 
 class CaptionFormat(str, Enum):
-    CEA608 = "cea608"
-    CEA708 = "cea708"
+    CEA608 = CEA608_FORMAT
+    CEA708 = CEA708_FORMAT
 
-
-CEA608_FORMAT = CaptionFormat.CEA608.value
-CEA708_FORMAT = CaptionFormat.CEA708.value
 
 TEMP_OUTPUT_DIR = "/tmp/caption_output"
+
 UNKNOWN_DEBUG_LEVEL = "UNKNOWN_DEBUG_LEVEL"
 VERBOSE = "VERBOSE"
 INFO = "INFO"
@@ -26,3 +27,13 @@ DEBUG_LEVELS = [
     FATAL,
     ASSERT,
 ]
+
+
+class DebugLevels(str, Enum):
+    UNKNOWN_DEBUG_LEVEL = UNKNOWN_DEBUG_LEVEL
+    VERBOSE = VERBOSE
+    INFO = INFO
+    WARN = WARN
+    ERROR = ERROR
+    FATAL = FATAL
+    ASSERT = ASSERT

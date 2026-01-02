@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from decoder import decode_mcc_file
 
 from lingua import LanguageDetectorBuilder
@@ -7,6 +7,8 @@ from constants import (
     CEA608_FORMAT,
     CEA708_FORMAT,
     CaptionFormat,
+    DEBUG_LEVELS,
+    DebugLevels,
 )
 
 # Build language detector once (supports common caption languages)
@@ -136,8 +138,27 @@ class MCCReader:
             self.formats = self._get_available_formats()
         return self.formats
 
-    def get_debug_metadata(self):
-        return self.debug_metadata
+    def get_debug_metadata(self, level: Union[DebugLevels, List[DebugLevels]] = None):
+        """
+        Get debug metadata for a specific level or all levels.
+
+        Args:
+            level: The level of the debug metadata to get.
+
+        Returns:
+            The debug metadata for the specified level or all levels.
+        """
+        if level is None:
+            return self.debug_metadata
+        elif isinstance(level, str):
+            if level not in DEBUG_LEVELS:
+                raise ValueError(f"Invalid level: {level}")
+            return [entry for entry in self.debug_metadata if entry["level"] == level]
+        elif isinstance(level, list):
+            invalid_levels = [lvl for lvl in level if lvl not in DEBUG_LEVELS]
+            if invalid_levels:
+                raise ValueError(f"Invalid level(s): {invalid_levels}")
+            return [entry for entry in self.debug_metadata if entry["level"] in level]
 
     def get_original_result(self):
         return self.result

@@ -3,7 +3,21 @@ from MCCReader import MCCReader
 reader = MCCReader()
 reader.read("samples/AXMT3111100H.mcc", output_dir="samples/output")
 # print("Debug metadata: ", reader.get_debug_metadata())
+# print("Debug metadata Level INFO: ", reader.get_debug_metadata(level="ABC"))
+# print("Debug metadata Level INFO: ", reader.get_debug_metadata(level="INFO"))
+# print("Debug metadata Level WARN: ", reader.get_debug_metadata(level="WARN"))
+# print("Debug metadata Level ERROR: ", reader.get_debug_metadata(level="ERROR"))
+# print(
+#     "Debug metadata Level WARN and INFO: ",
+#     reader.get_debug_metadata(level=["WARN", "INFO"]),
+# )
+# print(
+#     "Debug metadata Level WARN and INFO: ",
+#     reader.get_debug_metadata(level=["ABC", "INFO"]),
+# )
+
 # print("Original result: ", reader.get_original_result())
+
 # print("Tracks: ", reader.get_tracks())
 # print("Tracks: ", reader.get_tracks("cea608"))
 
