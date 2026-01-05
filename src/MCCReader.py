@@ -17,14 +17,14 @@ _language_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 class MCCReader:
     def __init__(self):
-        self.tracks = None
-        self.captions = None
-        self.fps = None
-        self.drop_frame = None
-        self.languages = None
-        self.formats = None
-        self.result = None
-        self.debug_metadata = None
+        self._tracks = None
+        self._captions = None
+        self._fps = None
+        self._drop_frame = None
+        self._languages = None
+        self._formats = None
+        self._result = None
+        self._debug_metadata = None
         self._languages_to_tracks = {
             CEA608_FORMAT: {},
             CEA708_FORMAT: {},
@@ -34,16 +34,59 @@ class MCCReader:
             CEA708_FORMAT: {},
         }
 
+    @property
+    def tracks(self):
+        """Available caption tracks grouped by standard (read-only)."""
+        return self._tracks
+
+    @property
+    def captions(self):
+        """Parsed captions data (read-only)."""
+        return self._captions
+
+    @property
+    def fps(self):
+        """Frame rate (read-only)."""
+        return self._fps
+
+    @property
+    def drop_frame(self):
+        """Drop frame flag (read-only)."""
+        return self._drop_frame
+
+    @property
+    def languages(self):
+        """Detected languages per track (read-only)."""
+        return self._languages
+
+    @property
+    def formats(self):
+        """Available caption formats (read-only)."""
+        return self._formats
+
+    @property
+    def result(self):
+        """Original decode result (read-only)."""
+        return self._result
+
+    @property
+    def debug_metadata(self):
+        """Debug metadata (read-only)."""
+        return self._debug_metadata
+
+    # ==================== Public Methods ====================
+
     def read(self, file_path: str, output_dir: str = None):
         result = decode_mcc_file(file_path, output_dir=output_dir)
-        self.result = result
-        self.captions = result["captions"]
-        self.debug_metadata = result["metadata"]["debug"]
-        self.fps = result["metadata"]["fps"]
-        self.drop_frame = result["metadata"].get("drop_frame", False)
-        self.tracks = self._get_available_tracks()
-        self.languages = self._detect_languages()
-        self.formats = self._get_available_formats()
+        # Must use self._* here because properties are read-only
+        self._result = result
+        self._captions = result["captions"]
+        self._debug_metadata = result["metadata"]["debug"]
+        self._fps = result["metadata"]["fps"]
+        self._drop_frame = result["metadata"].get("drop_frame", False)
+        self._tracks = self._get_available_tracks()
+        self._languages = self._detect_languages()
+        self._formats = self._get_available_formats()
 
     def get_captions(self, format: CaptionFormat = None, language: str = None):
         """
@@ -95,7 +138,7 @@ class MCCReader:
         """
         if self.tracks is None:
             print("No tracks found, getting available tracks ...")
-            self.tracks = self._get_available_tracks()
+            self._tracks = self._get_available_tracks()
 
         if format is None:
             print("No format provided, returning all tracks")
@@ -117,7 +160,7 @@ class MCCReader:
         """
         if self.languages is None:
             print("No languages found, detecting languages ...")
-            self.languages = self._detect_languages()
+            self._languages = self._detect_languages()
 
         if format is None:
             print("No format provided, returning all languages")
@@ -135,7 +178,7 @@ class MCCReader:
     def get_formats(self):
         if self.formats is None:
             print("No formats found, getting available formats ...")
-            self.formats = self._get_available_formats()
+            self._formats = self._get_available_formats()
         return self.formats
 
     def get_debug_metadata(self, level: Union[DebugLevels, List[DebugLevels]] = None):
@@ -178,6 +221,8 @@ class MCCReader:
             return True
         else:
             return False
+
+    # ==================== Private Methods ====================
 
     def _get_available_formats(self):
         self._raise_error_if_captions_is_none()

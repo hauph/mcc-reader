@@ -26,7 +26,7 @@ def parse_debug_file(output_dir: str) -> Dict[str, List[Dict[str, str]]]:
     # Pattern: LEVEL CATEGORY [source:line] - message
     # Example: WARN DBG_708_DEC [dtvcc_decode.c:342] - Mismatch in Packet length...
     pattern = re.compile(
-        r"^(" + "|".join(DEBUG_LEVELS) + ")\s+(\S+)\s+\[([^\]]+)\]\s+-\s+(.*)$"
+        r"^(" + "|".join(DEBUG_LEVELS) + r")\s+(\S+)\s+\[([^\]]+)\]\s+-\s+(.*)$"
     )
 
     with open(debug_file, "r") as f:

@@ -36,7 +36,7 @@ def parse_ccd_metadata(output_dir: str) -> Tuple[Optional[float], Optional[bool]
             # Look for Drop Frame line
             elif line.startswith("Drop Frame="):
                 value = line.split("=")[1].strip()
-                drop_frame = bool(value)
+                drop_frame = value.lower() == "true"
 
             # Stop parsing once we have both values (they appear early in the file)
             if frame_rate is not None and drop_frame is not None:
