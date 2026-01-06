@@ -1,0 +1,19 @@
+INFO DBG_GENERAL [main.c:194] - Version: v0.0 (v0.0-0-g9a0959c)
+INFO DBG_FILE_IN [autodetect_file.c:253] - Determined samples/NightOfTheLivingDead.mcc is an MCC File
+INFO DBG_FILE_IN [autodetect_file.c:288] - Caption Window for File: samples/NightOfTheLivingDead.mcc --- 00:00:00;00 to 00:19:52;15 
+INFO DBG_GENERAL [main.c:208] - Processing input file samples/NightOfTheLivingDead.mcc of type MCC Caption File
+INFO DBG_GENERAL [main.c:209] - Writing Output To: samples/output
+INFO DBG_GENERAL [main.c:212] - Writing all Artifacts.
+INFO DBG_FILE_IN [mcc_file.c:144] - Frame Rate: 30.0
+INFO DBG_608_OUT [line21_output.c:173] - Creating new Line-21 File for Output: samples/output/NightOfTheLivingDead-C1.608
+INFO DBG_CCD_OUT [cc_data_output.c:126] - Creating new CCD File for Output: samples/output/NightOfTheLivingDead.ccd
+INFO DBG_708_DEC [dtvcc_decode.c:767] - DTVCC Captioning on Service 1 started at 00:02:52;12
+INFO DBG_708_OUT [dtvcc_output.c:216] - Creating new DTVCC File for Output: samples/output/NightOfTheLivingDead-S1.708
+INFO DBG_708_DEC [dtvcc_decode.c:576] - DTVCC First Character of text found on Service 1 at 00:02:52;15
+INFO DBG_608_DEC [line21_decode.c:705] - Line 21 First Character of text found on Channel 1 at 00:02:56;02
+INFO DBG_608_DEC [line21_decode.c:450] - Line 21 PopOn Captioning on Channel 1 started at 00:02:57;12
+INFO DBG_FILE_IN [mcc_file.c:223] - Reached End of Captions File
+INFO DBG_GENERAL [mcc_file.c:224] - Captions File: samples/NightOfTheLivingDead.mcc contained 35741 lines of caption data
+INFO DBG_708_DEC [dtvcc_decode.c:243] - Found DTVCC PopOn Captioning Data on Service 1
+INFO DBG_608_DEC [line21_decode.c:258] - Found Line 21 PopOn Captioning on Channel 1
+INFO DBG_GENERAL [main.c:285] - Total Runtime: 0 seconds

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MCCReader"
+version = "0.1.0"
+description = "A Python library for reading and parsing MCC (MacCaption) closed caption files"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Text Processing",
+]
+keywords = ["mcc", "captions", "closed-captions", "cea608", "cea708", "subtitles"]
+dependencies = [
+    "lingua-language-detector>=2.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "watchdog>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hauph/mcc-reader"
+Repository = "https://github.com/hauph/mcc-reader"
+Issues = "https://github.com/hauph/mcc-reader/issues"
+
+[tool.setuptools.packages.find]
+include = ["MCCReader*"]

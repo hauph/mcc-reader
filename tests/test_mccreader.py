@@ -4,10 +4,10 @@ from unittest.mock import patch
 # MCCReader requires lingua-language-detector library - skip all tests if not installed
 pytest.importorskip("lingua", reason="lingua-language-detector library not installed")
 
-from src.MCCReader import MCCReader
-from src.constants import CEA608_FORMAT, CEA708_FORMAT
+from MCCReader import MCCReader
+from MCCReader.constants import CEA608_FORMAT, CEA708_FORMAT
 
-SAMPLE_FILE_NAME = "AXMT3111100H"
+SAMPLE_FILE_NAME = "NightOfTheLivingDead"
 
 
 class TestMCCReaderDetect:
@@ -165,7 +165,7 @@ class TestMCCReaderWithMockedDecoder:
             },
         }
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_read_populates_properties(self, mock_decode, mock_decode_result):
         """Should populate properties after read."""
         mock_decode.return_value = mock_decode_result
@@ -178,7 +178,7 @@ class TestMCCReaderWithMockedDecoder:
         assert reader.drop_frame is True
         assert reader.debug_metadata is not None
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_tracks_returns_available_tracks(self, mock_decode, mock_decode_result):
         """Should return available tracks after read."""
         mock_decode.return_value = mock_decode_result
@@ -193,7 +193,7 @@ class TestMCCReaderWithMockedDecoder:
         assert "c1" in tracks[CEA608_FORMAT]
         assert "s1" in tracks[CEA708_FORMAT]
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_tracks_by_format(self, mock_decode, mock_decode_result):
         """Should return tracks for specific format."""
         mock_decode.return_value = mock_decode_result
@@ -205,7 +205,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert "c1" in cea608_tracks
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_formats_returns_available_formats(
         self, mock_decode, mock_decode_result
     ):
@@ -220,7 +220,7 @@ class TestMCCReaderWithMockedDecoder:
         assert CEA608_FORMAT in formats
         assert CEA708_FORMAT in formats
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_captions_returns_all(self, mock_decode, mock_decode_result):
         """Should return all captions when no format specified."""
         mock_decode.return_value = mock_decode_result
@@ -233,7 +233,7 @@ class TestMCCReaderWithMockedDecoder:
         assert CEA608_FORMAT in captions
         assert CEA708_FORMAT in captions
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_captions_by_format(self, mock_decode, mock_decode_result):
         """Should return captions for specific format."""
         mock_decode.return_value = mock_decode_result
@@ -246,7 +246,7 @@ class TestMCCReaderWithMockedDecoder:
         assert len(captions) == 2
         assert captions[0]["text"] == "Hello world"
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_captions_invalid_format_raises_error(
         self, mock_decode, mock_decode_result
     ):
@@ -261,7 +261,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert "not found" in str(exc_info.value)
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_fps_returns_fps(self, mock_decode, mock_decode_result):
         """Should return fps value."""
         mock_decode.return_value = mock_decode_result
@@ -271,7 +271,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert reader.get_fps() == 29.97
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_drop_frame_returns_value(self, mock_decode, mock_decode_result):
         """Should return drop_frame value."""
         mock_decode.return_value = mock_decode_result
@@ -281,7 +281,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert reader.get_drop_frame() is True
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_debug_metadata_returns_all(self, mock_decode, mock_decode_result):
         """Should return all debug metadata."""
         mock_decode.return_value = mock_decode_result
@@ -294,7 +294,7 @@ class TestMCCReaderWithMockedDecoder:
         assert len(debug) == 1
         assert debug[0]["level"] == "INFO"
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_debug_metadata_by_level(self, mock_decode, mock_decode_result):
         """Should filter debug metadata by level."""
         mock_decode_result["metadata"]["debug"] = [
@@ -315,7 +315,7 @@ class TestMCCReaderWithMockedDecoder:
         assert len(warn_debug) == 1
         assert warn_debug[0]["message"] == "Warning"
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_debug_metadata_invalid_level_raises_error(
         self, mock_decode, mock_decode_result
     ):
@@ -330,7 +330,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert "Invalid level" in str(exc_info.value)
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_get_original_result(self, mock_decode, mock_decode_result):
         """Should return original decode result."""
         mock_decode.return_value = mock_decode_result
@@ -342,7 +342,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert result == mock_decode_result
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_tracks_property_returns_same_as_get_tracks(
         self, mock_decode, mock_decode_result
     ):
@@ -354,7 +354,7 @@ class TestMCCReaderWithMockedDecoder:
 
         assert reader.tracks == reader.get_tracks()
 
-    @patch("src.MCCReader.decode_mcc_file")
+    @patch("MCCReader.MCCReader.decode_mcc_file")
     def test_formats_property_returns_same_as_get_formats(
         self, mock_decode, mock_decode_result
     ):

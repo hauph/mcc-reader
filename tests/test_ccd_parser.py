@@ -1,5 +1,5 @@
 import pytest
-from src.parsers.ccd_parser import parse_ccd_metadata
+from MCCReader.parsers.ccd_parser import parse_ccd_metadata
 
 
 class TestParseCcdMetadata:

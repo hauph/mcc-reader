@@ -1,5 +1,5 @@
 import pytest
-from src.parsers.cea708_parser import (
+from MCCReader.parsers.cea708_parser import (
     cea708_color_to_rgb,
     cea708_opacity_to_css,
     parse_708_style,
@@ -311,7 +311,7 @@ class TestParse708File:
         assert captions[0]["layout"]["anchor"] == "UL"
 
     def test_timecode_conversion(self, tmp_path):
-        """Should convert timecodes to seconds."""
+        """Should convert timecodes to microseconds."""
         file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 1
 00:00:01:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPL:R0-C10} "Hello"
 00:00:02:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPL:R0-C10} "World"
@@ -321,8 +321,8 @@ class TestParse708File:
 
         captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
 
-        assert captions[0]["start"] == pytest.approx(1.0, rel=0.01)
-        assert captions[0]["end"] == pytest.approx(2.0, rel=0.01)
+        assert captions[0]["start"] == pytest.approx(1_000_000, rel=0.01)
+        assert captions[0]["end"] == pytest.approx(2_000_000, rel=0.01)
 
     def test_preserves_timecode_strings(self, tmp_path):
         """Should preserve original timecode strings."""

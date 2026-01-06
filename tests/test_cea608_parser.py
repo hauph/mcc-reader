@@ -1,5 +1,5 @@
 import pytest
-from src.parsers.cea608_parser import (
+from MCCReader.parsers.cea608_parser import (
     parse_608_style,
     parse_608_text_with_positions,
     parse_608_layout,
@@ -211,7 +211,7 @@ class TestParse608File:
         assert "\n" in captions[0]["text"]
 
     def test_timecode_conversion(self, tmp_path):
-        """Should convert timecodes to seconds.
+        """Should convert timecodes to microseconds.
 
         For pop-on captions (RCL), the caption is NOT visible until EOC.
         So start time should be at EOC, not when loading begins.
@@ -226,7 +226,7 @@ class TestParse608File:
         captions = parse_608_file(str(test_file), fps=24.0, drop_frame=False)
 
         # Pop-on caption displays at EOC (02:00), not when loaded (01:00)
-        assert captions[0]["start"] == pytest.approx(2.0, rel=0.01)
+        assert captions[0]["start"] == pytest.approx(2_000_000, rel=0.01)
         # End time is None when unknown (no subsequent EOC/EDM)
         assert captions[0]["end"] is None
 

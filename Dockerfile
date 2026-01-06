@@ -91,7 +91,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY src/ ./src/
+COPY MCCReader/ ./MCCReader/
 COPY watch.py .
-
-# CMD ["python", "src/script.py"]
+COPY dev.py .

@@ -3,18 +3,19 @@ import os
 import subprocess
 from unittest.mock import patch, MagicMock
 
-from src.decoder import decode_mcc_file, parse_caption_files
-from src.constants import CEA608_FORMAT, CEA708_FORMAT
+from MCCReader.decoder import decode_mcc_file, parse_caption_files
+from MCCReader.constants import CEA608_FORMAT, CEA708_FORMAT
+
+OUTPUT_DIR = "samples/output"
 
 
 class TestParseCaptioneFiles:
     """Tests for parse_caption_files function using pre-generated output files."""
 
     def test_parse_existing_output_directory(self):
-        """Should parse the existing samples/output directory."""
-        output_dir = "samples/output"
+        """Should parse the existing OUTPUT_DIR directory."""
 
-        result = parse_caption_files(output_dir)
+        result = parse_caption_files(OUTPUT_DIR)
 
         assert "captions" in result
         assert "metadata" in result
@@ -23,11 +24,10 @@ class TestParseCaptioneFiles:
 
     def test_parse_extracts_cea608_captions(self):
         """Should extract CEA-608 captions from .608 files."""
-        output_dir = "samples/output"
 
-        result = parse_caption_files(output_dir)
+        result = parse_caption_files(OUTPUT_DIR)
 
-        # Should have c1 channel from AXMT3111100H-C1.608
+        # Should have c1 channel from NightOfTheLivingDead-C1.608
         assert "c1" in result["captions"][CEA608_FORMAT]
         captions = result["captions"][CEA608_FORMAT]["c1"]
         assert len(captions) > 0
@@ -37,11 +37,10 @@ class TestParseCaptioneFiles:
 
     def test_parse_extracts_cea708_captions(self):
         """Should extract CEA-708 captions from .708 files."""
-        output_dir = "samples/output"
 
-        result = parse_caption_files(output_dir)
+        result = parse_caption_files(OUTPUT_DIR)
 
-        # Should have s1 service from AXMT3111100H-S1.708
+        # Should have s1 service from NightOfTheLivingDead-S1.708
         assert "s1" in result["captions"][CEA708_FORMAT]
         captions = result["captions"][CEA708_FORMAT]["s1"]
         assert len(captions) > 0
@@ -50,9 +49,8 @@ class TestParseCaptioneFiles:
 
     def test_parse_extracts_metadata_from_ccd(self):
         """Should extract frame rate and drop frame from .ccd file."""
-        output_dir = "samples/output"
 
-        result = parse_caption_files(output_dir)
+        result = parse_caption_files(OUTPUT_DIR)
 
         # The sample has 30DF (30 drop frame) = 29.97fps
         assert result["metadata"]["fps"] == pytest.approx(29.97, rel=0.01)
@@ -110,7 +108,7 @@ class TestDecodeMccFileValidation:
         """Should not raise error for valid MCC file header check."""
         # Just verify the sample file passes header validation
         # (Will fail at subprocess if caption-inspector not installed)
-        mcc_path = "samples/AXMT3111100H.mcc"
+        mcc_path = "samples/NightOfTheLivingDead.mcc"
 
         # Read and verify header manually
         with open(mcc_path, "r", encoding="utf-8-sig") as f:
@@ -122,9 +120,9 @@ class TestDecodeMccFileValidation:
 class TestDecodeMccFileMocked:
     """Tests for decode_mcc_file with mocked subprocess."""
 
-    @patch("src.decoder.subprocess.run")
-    @patch("src.decoder.parse_caption_files")
-    @patch("src.decoder.parse_debug_file")
+    @patch("MCCReader.decoder.subprocess.run")
+    @patch("MCCReader.decoder.parse_caption_files")
+    @patch("MCCReader.decoder.parse_debug_file")
     def test_calls_caption_inspector(self, mock_debug, mock_parse, mock_run, tmp_path):
         """Should call caption-inspector with correct arguments."""
         # Setup mocks
@@ -150,7 +148,7 @@ class TestDecodeMccFileMocked:
         assert "-o" in call_args
         assert str(mcc_file) in call_args
 
-    @patch("src.decoder.subprocess.run")
+    @patch("MCCReader.decoder.subprocess.run")
     def test_handles_caption_inspector_failure(self, mock_run, tmp_path):
         """Should raise RuntimeError when caption-inspector fails."""
         mock_run.return_value = MagicMock(returncode=1, stderr="Error message")
@@ -163,7 +161,7 @@ class TestDecodeMccFileMocked:
 
         assert "Caption Inspector failed" in str(exc_info.value)
 
-    @patch("src.decoder.subprocess.run")
+    @patch("MCCReader.decoder.subprocess.run")
     def test_handles_caption_inspector_not_found(self, mock_run, tmp_path):
         """Should raise RuntimeError when caption-inspector not installed."""
         mock_run.side_effect = FileNotFoundError()
@@ -176,7 +174,7 @@ class TestDecodeMccFileMocked:
 
         assert "not found" in str(exc_info.value)
 
-    @patch("src.decoder.subprocess.run")
+    @patch("MCCReader.decoder.subprocess.run")
     def test_handles_timeout(self, mock_run, tmp_path):
         """Should raise RuntimeError on timeout."""
         mock_run.side_effect = subprocess.TimeoutExpired(

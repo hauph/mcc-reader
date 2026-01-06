@@ -1,4 +1,4 @@
-from src.parsers.dbg_parser import parse_debug_file
+from MCCReader.parsers.dbg_parser import parse_debug_file
 
 
 class TestParseDebugFile:
