@@ -75,7 +75,6 @@ class TestMCCReaderBeforeRead:
         assert reader.captions is None
         assert reader.fps is None
         assert reader.drop_frame is None
-        assert reader.languages is None
         assert reader.formats is None
         assert reader.result is None
         assert reader.debug_metadata is None

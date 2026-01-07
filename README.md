@@ -11,13 +11,13 @@ I struggeled to find a public or open-source library that did this (maybe I just
 ## Features
 
 - 📝 Parse MCC files into structured caption data. In order to achive this, I followed the script [cshim.py](https://github.com/Comcast/caption-inspector/blob/master/python/cshim.py) from Caption Inspector to understand how they decode the MCC files and return the output files. Furthermore, as inspired by Pycaption, I tried to produce as similar caption data as possible (with some differences):
-  - `start`: Start time in microseconds
-  - `start_timecode`: Start time in timecode format
-  - `end`: End time in microseconds
-  - `end_timecode`: End time in timecode format
-  - `text`: Caption decoded text
-  - `style`: A dictionary with CSS-like styling rules (`None` if not present)
-  - `layout`: A Layout object with the necessary positioning information (`None` if not present)
+  - `start`: Start time in microseconds.
+  - `start_timecode`: Start time in timecode format.
+  - `end`: End time in microseconds.
+  - `end_timecode`: End time in timecode format.
+  - `text`: Caption decoded text.
+  - `style`: A dictionary with CSS-like styling rules (`None` if not present).
+  - `layout`: A Layout object with the necessary positioning information (`None` if not present).
 - 🎯 Support for both **CEA-608** (Line 21) and **CEA-708** (DTVCC) formats.
 - 🌍 Automatic language detection using [lingua](https://github.com/pemistahl/lingua-py).
 - ⏱️ Frame rate and drop frame detection from output file (.ccd).
@@ -28,15 +28,13 @@ I struggeled to find a public or open-source library that did this (maybe I just
 
 - Python 3.11+
 
-## Installation
+<!-- ## Installation -->
 
-### Using Docker
-
-Build the Docker image which includes Caption Inspector and all dependencies:
+<!-- ### Using pip
 
 ```bash
-docker build -t mcc-reader .
-```
+pip install MCCReader
+```-->
 
 ## Usage
 
@@ -59,7 +57,7 @@ cea708_captions = reader.get_captions(format="cea708")
 spanish_captions = reader.get_captions(format="cea608", language="es")
 ```
 
-### Available Methods
+### Other Available Methods
 
 ```python
 # Get available caption tracks
@@ -67,8 +65,8 @@ reader.get_tracks()              # All tracks: {"cea608": ["c1"], "cea708": ["s1
 reader.get_tracks("cea608")      # CEA-608 only: ["c1", "c3"]
 
 # Get detected languages
-reader.get_languages()           # {"cea608": ["en"], "cea708": ["en", "es"]}
-reader.get_languages("cea708")   # ["en", "es"]
+reader.get_languages()           # {"cea608": {"c1": "en", "c3": "es"}, "cea708": {"s1": "en", "s2": "es", "s3": "fr"}}
+reader.get_languages("cea608")   # {"c1": "en", "c3": "es"}
 
 # Get available formats
 reader.get_formats()             # ["cea608", "cea708"]
@@ -80,7 +78,7 @@ reader.get_drop_frame()          # True/False
 # Get debug information
 reader.get_debug_metadata()                    # All debug entries
 reader.get_debug_metadata(level="WARN")        # Filter by level
-reader.get_debug_metadata(level=["WARN", "ERROR"])
+reader.get_debug_metadata(level=["WARN", "ERROR"]) # Filter by multiple levels
 ## List of all debug levels: 
 ## (captured from https://github.com/Comcast/caption-inspector/blob/master/python/cshim.py#L27C12-L27C112)
 ### DEBUG_LEVELS = [
@@ -116,15 +114,6 @@ This generates:
 - `*.dbg` - [Debug File](https://comcast.github.io/caption-inspector/html/docs-page.html#section-7-6)
 
 If no output directory is specified, the output files will be saved temporarily in `/tmp/caption_output` and will be cleaned up after decoding is done.
-
-## Docker Examples
-
-Run the example script:
-
-```bash
-docker run -v $(pwd)/samples:/app/samples mcc-reader \
-    python dev.py
-```
 
 ## Caption Output Format
 
@@ -238,23 +227,35 @@ Captions are returned as a list of dictionaries:
 
 ## Development
 
-Watch for file changes during development:
+- Build the Docker image which includes Caption Inspector and all dependencies:
 
 ```bash
-./dev.sh
+docker build -t mcc-reader .
+```
+
+- Watch for file changes during development:
+
+```bash
+./dev.sh --watch
 ```
 
 All development commands:
 
-- `./dev.sh`: Run [dev.py](./dev.py) once.
-- `./dev.sh --watch`: Watch mode: auto-reload on Python file changes.
-- `./dev.sh src/other.py`: Run specific script once.
-- `./dev.sh --watch src/other.py`: Watch mode with specific script.
+`./dev.sh`: Run [dev.py](./dev.py) once.
+`./dev.sh --watch`: Watch mode: auto-reload on Python file changes (except [watch.py](./watch.py)).
 
-Run tests (better be run inside a [virtual environment](https://www.w3schools.com/django/django_create_virtual_environment.php)):
+
+- Run the example script inside the Docker container:
 
 ```bash
-pip install --no-cache-dir -r requirements.txt
+docker run -v $(pwd)/samples:/app/samples mcc-reader \
+    python dev.py
+```
+
+- Run tests (recommended inside a [virtual environment](https://www.w3schools.com/django/django_create_virtual_environment.php)):
+
+```bash
+pip install -e ".[dev]"
 pytest tests/ -v
 ```
 

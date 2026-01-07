@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple file watcher that watches .py files in the src/ directory."""
+"""Simple file watcher that watches .py files in the project."""
 
 import subprocess
 import sys
@@ -8,7 +8,7 @@ from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-WATCH_DIR = "src"
+WATCH_DIRS = [".", "MCCReader"]
 
 
 class PyFileHandler(FileSystemEventHandler):
@@ -33,6 +33,9 @@ class PyFileHandler(FileSystemEventHandler):
         p = Path(path)
         if p.suffix != ".py":
             return False
+        # Exclude watch.py itself
+        if p.name == "watch.py":
+            return False
         # Debounce
         now = time.time()
         if now - self.last_restart < self.debounce_seconds:
@@ -47,15 +50,14 @@ class PyFileHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    script = sys.argv[1] if len(sys.argv) > 1 else "src/script.py"
     print("🔥 Hot reload enabled - watching for changes...")
-    print(f"   Watching: {WATCH_DIR}/")
-    print(f"   Running: {script}")
+    print(f"   Watching: {', '.join(WATCH_DIRS)}")
     print("   Press Ctrl+C to stop\n")
 
-    handler = PyFileHandler(script)
+    handler = PyFileHandler("dev.py")
     observer = Observer()
-    observer.schedule(handler, WATCH_DIR, recursive=False)
+    for watch_dir in WATCH_DIRS:
+        observer.schedule(handler, watch_dir, recursive=False)
     observer.start()
 
     try:

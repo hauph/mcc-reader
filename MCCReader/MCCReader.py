@@ -21,7 +21,6 @@ class MCCReader:
         self._captions = None
         self._fps = None
         self._drop_frame = None
-        self._languages = None
         self._formats = None
         self._result = None
         self._debug_metadata = None
@@ -57,7 +56,7 @@ class MCCReader:
     @property
     def languages(self):
         """Detected languages per track (read-only)."""
-        return self._languages
+        return self._tracks_to_languages
 
     @property
     def formats(self):
@@ -85,8 +84,8 @@ class MCCReader:
         self._fps = result["metadata"]["fps"]
         self._drop_frame = result["metadata"].get("drop_frame", False)
         self._tracks = self._get_available_tracks()
-        self._languages = self._detect_languages()
         self._formats = self._get_available_formats()
+        self._detect_languages()
 
     def get_captions(self, format: CaptionFormat = None, language: str = None):
         """
@@ -158,10 +157,6 @@ class MCCReader:
                 "cea708": {"s1": "en", "s2": "es", "s3": "fr"}
             }
         """
-        if self.languages is None:
-            print("No languages found, detecting languages ...")
-            self._languages = self._detect_languages()
-
         if format is None:
             print("No format provided, returning all languages")
             return self.languages
@@ -236,16 +231,8 @@ class MCCReader:
     def _detect_languages(self):
         """
         Detect languages for all caption tracks using lingua-language-detector.
-
-        Returns:
-            Dictionary with detected languages per track.
         """
         self._raise_error_if_captions_is_none()
-
-        result = {
-            CEA608_FORMAT: [],
-            CEA708_FORMAT: [],
-        }
 
         for format_name in self.get_formats():
             for track_name in self.get_tracks(format_name):
@@ -269,11 +256,6 @@ class MCCReader:
                     self._languages_to_tracks[format_name][lang] = []
                 self._languages_to_tracks[format_name][lang].append(track_name)
                 self._tracks_to_languages[format_name][track_name] = lang
-
-                if lang not in result[format_name]:
-                    result[format_name].append(lang)
-
-        return result
 
     def _get_available_tracks(self):
         """
