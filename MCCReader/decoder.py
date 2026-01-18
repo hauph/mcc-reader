@@ -109,7 +109,7 @@ def decode_mcc_file(
     if not os.path.exists(mcc_file_path):
         raise FileNotFoundError(f"MCC file not found: {mcc_file_path}")
 
-    if not mcc_file_path.endswith(".mcc"):
+    if not mcc_file_path.lower().endswith(".mcc"):
         raise ValueError(f"MCC file must have .mcc extension: {mcc_file_path}")
 
     content = None

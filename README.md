@@ -26,7 +26,7 @@ I struggeled to find a public or open-source library that did this (maybe I just
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.8+ (recommended: 3.11).
 
 <!-- ## Installation -->
 
@@ -243,7 +243,6 @@ All development commands:
 
 `./dev.sh`: Run [dev.py](./dev.py) once.
 `./dev.sh --watch`: Watch mode: auto-reload on Python file changes (except [watch.py](./watch.py)).
-
 
 - Run the example script inside the Docker container:
 

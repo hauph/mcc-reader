@@ -7,19 +7,25 @@ name = "MCCReader"
 version = "0.1.0"
 description = "A Python library for reading and parsing MCC (MacCaption) closed caption files"
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.11"
+license = "MIT"
+requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Multimedia :: Video",
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Text Processing",
+    "Topic :: Text Processing :: General",  
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["mcc", "captions", "closed-captions", "cea608", "cea708", "subtitles"]
+keywords = ["mcc", "captions", "closed-captions", "cea608", "cea708", "subtitles", "maccaption", "mcc-reader", "maccaption-reader"]
 dependencies = [
     "lingua-language-detector>=2.0.2",
 ]
