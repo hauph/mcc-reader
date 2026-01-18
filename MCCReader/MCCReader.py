@@ -3,7 +3,7 @@ from typing import List, Union
 from lingua import LanguageDetectorBuilder
 
 from .decoder import decode_mcc_file
-from .constants import (
+from .models import (
     CEA608_FORMAT,
     CEA708_FORMAT,
     CaptionFormat,

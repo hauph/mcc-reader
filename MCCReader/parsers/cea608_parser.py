@@ -3,66 +3,7 @@ from typing import Any, Dict, List
 
 from ..utils import timecode_to_microseconds
 
-# CEA-608 color mappings from Caption Inspector
-# PAC colors (Preamble Address Code)
-PAC_COLORS = {
-    "white": "#FFFFFF",
-    "green": "#00FF00",
-    "blue": "#0000FF",
-    "cyan": "#00FFFF",
-    "red": "#FF0000",
-    "yellow": "#FFFF00",
-    "magenta": "#FF00FF",
-    "black": "#000000",
-    "italic white": "#FFFFFF",  # Special style + color combo
-}
-
-# Mid-row foreground styles (includes Italic White)
-# Note: Black is technically only a background color in CEA-608 spec,
-# but we support it as foreground for flexibility
-MIDROW_FG_STYLES = {
-    "white": "#FFFFFF",
-    "green": "#00FF00",
-    "blue": "#0000FF",
-    "cyan": "#00FFFF",
-    "red": "#FF0000",
-    "yellow": "#FFFF00",
-    "magenta": "#FF00FF",
-    "black": "#000000",
-    "italic white": "#FFFFFF",
-}
-
-# Mid-row background colors
-MIDROW_BG_COLORS = {
-    "white": "#FFFFFF",
-    "green": "#00FF00",
-    "blue": "#0000FF",
-    "cyan": "#00FFFF",
-    "red": "#FF0000",
-    "yellow": "#FFFF00",
-    "magenta": "#FF00FF",
-    "black": "#000000",
-}
-
-# CEA-608 control code descriptions
-CONTROL_CODES = {
-    "RCL": "Resume Caption Loading",
-    "BS": "Backspace",
-    "AOF": "Alarm Off",
-    "AON": "Alarm On",
-    "DER": "Delete to End of Row",
-    "RU2": "Roll Up Captions Two Rows",
-    "RU3": "Roll Up Captions Three Rows",
-    "RU4": "Roll Up Captions Four Rows",
-    "FON": "Flash On",
-    "RDC": "Resume Direct Captioning",
-    "TR": "Text Restart",
-    "RTD": "Resume Text Display",
-    "EDM": "Erase Displayed Memory",
-    "CR": "Carriage Return",
-    "ENM": "Erase Non-Displayed Memory",
-    "EOC": "End Of Caption",
-}
+from ..models import MIDROW_FG_STYLES, MIDROW_BG_COLORS, PAC_COLORS, CONTROL_CODES
 
 
 def parse_608_style(content: str) -> Dict[str, Any]:
@@ -170,12 +111,209 @@ def parse_608_style(content: str) -> Dict[str, Any]:
     return style
 
 
+def parse_608_text_segments(
+    content: str,
+) -> tuple[str, Dict[str, Any] | None, List[Dict[str, Any]] | None]:
+    """
+    Parse CEA-608 content to extract text with style segments.
+
+    Style commands (FG, BG, PAC with color) apply to subsequent text until changed.
+    This function tracks style changes and associates each text segment
+    with its applicable style.
+
+    Args:
+        content: The content string containing style and position codes
+
+    Returns:
+        Tuple of (full_text, style, segments):
+        - full_text: Complete text with newlines
+        - style: Single style dict if all text has same style, None if multiple styles
+        - segments: List of {text, style} dicts if multiple styles, None if single style
+    """
+    # Find all style commands and their positions
+    # FG (foreground): {FG-<color>} or {FG-<color>:PT:UL}
+    fg_pattern = re.compile(r"\{FG-([^}]+)\}")
+    # BG (background): {BG-<color>} or {BG-<color>:PT:UL}
+    bg_pattern = re.compile(r"\{BG-([^}:]+)(?::([^}]+))?\}")
+    # PAC with color: {R<row>:<color>} or {R<row>:<color>:UL}
+    pac_color_pattern = re.compile(r"\{R(\d+):([A-Za-z][A-Za-z ]+)(?::UL)?\}")
+    # PAC with position: {R<row>:C<col>} or {R<row>:C<col>:UL}
+    pac_pos_pattern = re.compile(r"\{R(\d+):C(\d+)(?::UL)?\}")
+    # Standalone underline
+    ul_pattern = re.compile(r"\{UL\}")
+    # Text pattern
+    text_pattern = re.compile(r'"([^"]*)"')
+
+    # Build list of (position, type, data) tuples
+    events = []
+
+    # Collect FG style commands
+    for match in fg_pattern.finditer(content):
+        events.append((match.start(), "fg", match.group(1)))
+
+    # Collect BG style commands
+    for match in bg_pattern.finditer(content):
+        color = match.group(1)
+        flags = match.group(2) or ""
+        events.append((match.start(), "bg", (color, flags)))
+
+    # Collect PAC with color
+    for match in pac_color_pattern.finditer(content):
+        row = int(match.group(1))
+        color = match.group(2)
+        has_ul = ":UL" in match.group(0)
+        events.append((match.start(), "pac_color", (row, color, has_ul)))
+
+    # Collect PAC with position
+    for match in pac_pos_pattern.finditer(content):
+        row = int(match.group(1))
+        col = int(match.group(2))
+        has_ul = ":UL" in match.group(0)
+        events.append((match.start(), "pac_pos", (row, col, has_ul)))
+
+    # Collect standalone underline
+    for match in ul_pattern.finditer(content):
+        events.append((match.start(), "ul", True))
+
+    # Collect text segments
+    for match in text_pattern.finditer(content):
+        text = match.group(1)
+        if text:  # Skip empty strings
+            events.append((match.start(), "text", text))
+
+    # Sort events by position
+    events.sort(key=lambda x: x[0])
+
+    # Process events sequentially, tracking current style and row
+    current_style = {}
+    current_row = 0
+    segments = []
+
+    for _, event_type, data in events:
+        if event_type == "fg":
+            fg_content = data
+            # Split by colon to separate style from flags
+            parts = fg_content.split(":")
+            fg_style = parts[0]
+            fg_flags = ":".join(parts[1:]) if len(parts) > 1 else ""
+
+            # Handle "Italic White" as a special combo
+            fg_style_normalized = fg_style.replace("-", " ").lower().strip()
+
+            if fg_style_normalized == "italic white":
+                current_style["font-style"] = "italic"
+                current_style["color"] = "white"
+            elif fg_style_normalized in MIDROW_FG_STYLES:
+                current_style["color"] = fg_style_normalized
+            else:
+                # Try individual parts
+                style_parts = fg_style.split("-")
+                for part in style_parts:
+                    part_lower = part.lower().strip()
+                    if part_lower in MIDROW_FG_STYLES:
+                        current_style["color"] = part_lower
+                    elif part_lower == "italic":
+                        current_style["font-style"] = "italic"
+
+            if "PT" in fg_flags:
+                current_style["partially_transparent"] = True
+            if "UL" in fg_flags:
+                current_style["text-decoration"] = "underline"
+
+        elif event_type == "bg":
+            color, flags = data
+            bg_color = color.lower()
+            if bg_color in MIDROW_BG_COLORS:
+                current_style["background-color"] = bg_color
+
+            if "PT" in flags:
+                current_style["background_partially_transparent"] = True
+            if "UL" in flags:
+                current_style["text-decoration"] = "underline"
+
+        elif event_type == "pac_color":
+            row, color, has_ul = data
+            current_row = row
+            color_lower = color.lower()
+            if color_lower == "italic white":
+                current_style["color"] = "white"
+                current_style["font-style"] = "italic"
+            elif color_lower in PAC_COLORS:
+                current_style["color"] = color_lower
+            if has_ul:
+                current_style["text-decoration"] = "underline"
+
+        elif event_type == "pac_pos":
+            row, col, has_ul = data
+            current_row = row
+            if has_ul:
+                current_style["text-decoration"] = "underline"
+
+        elif event_type == "ul":
+            current_style["text-decoration"] = "underline"
+
+        elif event_type == "text":
+            text = data
+            segments.append(
+                {
+                    "text": text,
+                    "style": dict(current_style) if current_style else None,
+                    "row": current_row,
+                }
+            )
+
+    if not segments:
+        return "", None, None
+
+    # Sort segments by row
+    segments.sort(key=lambda x: x["row"])
+
+    # Build full text with newlines between different rows
+    full_text_parts = []
+    prev_row = None
+    for seg in segments:
+        if prev_row is not None and seg["row"] != prev_row:
+            # Add newline when row changes
+            if full_text_parts:
+                full_text_parts[-1] = full_text_parts[-1] + "\n"
+        full_text_parts.append(seg["text"])
+        prev_row = seg["row"]
+
+    full_text = "".join(full_text_parts)
+
+    # Check if all segments have the same style
+    styles = [seg["style"] for seg in segments]
+    all_same_style = all(s == styles[0] for s in styles)
+
+    if all_same_style:
+        # Single style - return style at top level, no segments
+        return full_text, styles[0], None
+    else:
+        # Multiple styles - build segments with text including newlines
+        result_segments = []
+        for i, seg in enumerate(segments):
+            seg_text = seg["text"]
+            # Add newline to text if row changes after this segment
+            if i < len(segments) - 1 and segments[i + 1]["row"] != seg["row"]:
+                seg_text += "\n"
+            result_seg = {"text": seg_text}
+            if seg["style"]:
+                result_seg["style"] = seg["style"]
+            result_segments.append(result_seg)
+
+        return full_text, None, result_segments
+
+
 def parse_608_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any]]]:
     """
     Parse CEA-608 content to extract text with line breaks based on row positions.
 
     When row position changes (e.g., {R14:C8} to {R15:C4}), insert a line break.
     Caption Inspector format from PreambleAccessCode.__str__(): '{R' + row + ':C' + col + ...
+
+    Text can appear:
+    - After {R##:C##} tags (explicit position)
+    - Before any position tag (uses default row 0 or continues from previous)
 
     Args:
         content: The content string containing position codes and text
@@ -187,6 +325,9 @@ def parse_608_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
     current_row = None
     current_line_text = []
     current_line_col = None
+
+    # Default row for text that appears before any position marker
+    default_row = 0
 
     # Pattern to match position codes followed by optional text
     # This handles: {R14:C8} {TO3} "text" or {R15:C4} "text"
@@ -205,37 +346,48 @@ def parse_608_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
         # Extract text from this segment
         text_matches = re.findall(r'"([^"]*)"', segment)
 
-        if row_match and text_matches:
-            row = int(row_match.group(1))
-            col = int(row_match.group(2))
+        if text_matches:
             text = " ".join(text_matches).strip()
+            if not text:
+                continue
 
-            if current_row is not None and row != current_row:
-                # Row changed - save current line and start new one
-                if current_line_text:
-                    lines.append(
-                        {
-                            "row": current_row,
-                            "column": current_line_col,
-                            "text": " ".join(current_line_text),
-                        }
-                    )
-                current_line_text = [text]
-                current_line_col = col
-            else:
-                # Same row or first segment
-                current_line_text.append(text)
-                if current_line_col is None:
+            if row_match:
+                # Text after position marker - use explicit position
+                row = int(row_match.group(1))
+                col = int(row_match.group(2))
+
+                if current_row is not None and row != current_row:
+                    # Row changed - save current line and start new one
+                    if current_line_text:
+                        lines.append(
+                            {
+                                "row": current_row,
+                                "column": current_line_col,
+                                "text": " ".join(current_line_text),
+                            }
+                        )
+                    current_line_text = [text]
                     current_line_col = col
+                else:
+                    # Same row or first segment with position
+                    current_line_text.append(text)
+                    if current_line_col is None:
+                        current_line_col = col
 
-            current_row = row
-
-        elif text_matches and current_row is not None:
-            # Text without new position - append to current line
-            current_line_text.append(" ".join(text_matches).strip())
+                current_row = row
+            else:
+                # Text without position marker
+                if current_row is not None:
+                    # Continue from previous row
+                    current_line_text.append(text)
+                else:
+                    # No previous row - use default row 0
+                    current_row = default_row
+                    current_line_col = 0
+                    current_line_text.append(text)
 
     # Don't forget the last line
-    if current_line_text:
+    if current_line_text and current_row is not None:
         lines.append(
             {
                 "row": current_row,
@@ -332,6 +484,150 @@ def parse_608_layout(content: str) -> Dict[str, Any]:
     return layout
 
 
+def _merge_caption_text(
+    caption: Dict[str, Any],
+    new_text: str,
+    new_lines: List[Dict[str, Any]],
+    new_style: Dict[str, Any] | None,
+    new_segments: List[Dict[str, Any]] | None,
+) -> None:
+    """
+    Merge new text into an existing caption buffer (for pop-on mode continuation).
+
+    Text without explicit position markers should continue on the last row.
+    Text with position markers starts on the specified row.
+
+    Args:
+        caption: The existing caption dict to merge into (modified in place)
+        new_text: The new text to merge
+        new_lines: Position information for the new text
+        new_style: Style for the new text (if single style)
+        new_segments: Segments for the new text (if multiple styles)
+    """
+    if not caption.get("layout"):
+        caption["layout"] = {}
+
+    existing_lines = caption["layout"].get("lines", [])
+
+    # Find the last row in the existing caption
+    last_row = 0
+    if existing_lines:
+        last_row = max(line["row"] for line in existing_lines)
+
+    # Process new lines - if a line has row 0 and column 0, it likely means
+    # no position was specified, so it should continue on the last row
+    adjusted_lines = []
+    for line in new_lines:
+        if line["row"] == 0 and line["column"] == 0 and existing_lines:
+            # No explicit position - continue on last row
+            # Find if there's already text on the last row
+            found_last_row = False
+            for existing in existing_lines:
+                if existing["row"] == last_row:
+                    # Append to existing text on this row
+                    existing["text"] += " " + line["text"]
+                    found_last_row = True
+                    break
+            if not found_last_row:
+                # Add to last row
+                adjusted_lines.append(
+                    {"row": last_row, "column": 0, "text": line["text"]}
+                )
+        else:
+            # Explicit position specified
+            adjusted_lines.append(line)
+
+    # Add the adjusted lines to existing
+    caption["layout"]["lines"] = existing_lines + adjusted_lines
+
+    # Rebuild the text from all lines
+    all_lines = caption["layout"]["lines"]
+    # Sort by row
+    all_lines.sort(key=lambda x: x["row"])
+    caption["text"] = "\n".join(line["text"] for line in all_lines)
+
+    # Handle style/segments merging
+    # Get text that was added (for segment creation)
+    added_text_parts = []
+    for line in new_lines:
+        if line["row"] == 0 and line["column"] == 0 and len(existing_lines) > 0:
+            # This text was appended to existing row, find it
+            for existing in existing_lines:
+                if existing["row"] == last_row:
+                    # The appended text (with leading space)
+                    added_text_parts.append(line["text"])
+                    break
+        else:
+            added_text_parts.append(line["text"])
+
+    if new_segments:
+        existing_segments = caption.get("segments", [])
+        if existing_segments:
+            caption["segments"] = existing_segments + new_segments
+        else:
+            # Convert from single style to segments
+            if caption.get("style"):
+                old_lines = [
+                    line
+                    for line in all_lines
+                    if line not in adjusted_lines and line not in new_lines
+                ]
+                old_text = "\n".join(line["text"] for line in old_lines)
+                if old_text:
+                    caption["segments"] = [
+                        {"text": old_text + "\n", "style": caption["style"]}
+                    ] + new_segments
+                else:
+                    caption["segments"] = new_segments
+            else:
+                caption["segments"] = new_segments
+            caption["style"] = None
+    elif caption.get("segments"):
+        # Caption already has segments - add new text as segment
+        if new_style or added_text_parts:
+            added_text = "\n".join(added_text_parts) if added_text_parts else new_text
+            seg = {"text": " " + added_text}
+            if new_style:
+                seg["style"] = new_style
+            caption["segments"].append(seg)
+    elif caption.get("style") != new_style:
+        # Styles are different - convert to segments
+        # Get the original text before merging
+        original_text = ""
+        for line in existing_lines:
+            if original_text:
+                original_text += "\n"
+            # Get text before the appended part
+            if line["row"] == last_row and added_text_parts:
+                # This line may have had text appended to it
+                full_text = line["text"]
+                for added in added_text_parts:
+                    if full_text.endswith(" " + added):
+                        full_text = full_text[: -(len(added) + 1)]
+                        break
+                original_text += full_text
+            else:
+                original_text += line["text"]
+
+        # Build new text from new_lines
+        new_text_combined = (
+            "\n".join(added_text_parts) if added_text_parts else new_text
+        )
+
+        caption["segments"] = []
+        if original_text:
+            seg1 = {"text": original_text}
+            if caption.get("style"):
+                seg1["style"] = caption["style"]
+            caption["segments"].append(seg1)
+        if new_text_combined:
+            seg2 = {"text": " " + new_text_combined}
+            if new_style:
+                seg2["style"] = new_style
+            caption["segments"].append(seg2)
+        caption["style"] = None
+
+
 def parse_608_file(
     file_path: str, fps: float = 24.0, drop_frame: bool = False
 ) -> List[Dict[str, Any]]:
@@ -396,6 +692,15 @@ def parse_608_file(
         is_paint_on = "{RDC}" in content  # Resume Direct Captioning (paint-on mode)
         is_roll_up = "{RU2}" in content or "{RU3}" in content or "{RU4}" in content
 
+        # Handle EDM - erases displayed memory (but doesn't affect loading buffer)
+        # Process EDM first, then continue to handle any text on the same line
+        if is_edm:
+            if displayed_caption and displayed_caption.get("text"):
+                displayed_caption["end"] = current_time
+                displayed_caption["end_timecode"] = timecode
+                captions.append(displayed_caption)
+                displayed_caption = None
+
         # Handle EOC - displays the loaded pop-on caption
         if is_eoc:
             # End the currently displayed caption
@@ -412,18 +717,10 @@ def parse_608_file(
                 displayed_caption = loading_caption
                 loading_caption = None
 
-        # Handle EDM - erases displayed memory
-        elif is_edm:
-            if displayed_caption and displayed_caption.get("text"):
-                displayed_caption["end"] = current_time
-                displayed_caption["end_timecode"] = timecode
-                captions.append(displayed_caption)
-                displayed_caption = None
-
-        # Handle text content
-        elif text:
-            # Extract style and layout information
-            style = parse_608_style(content)
+        # Handle text content (can be on same line as EDM or other control codes)
+        if text:
+            # Extract style and layout information using segment-aware parsing
+            _, style, segments = parse_608_text_segments(content)
             layout = parse_608_layout(content)
 
             if text_lines:
@@ -435,12 +732,16 @@ def parse_608_file(
                 "end": None,
                 "end_timecode": None,
                 "text": text,
-                "style": style if style else None,
+                "style": style,  # None if segments are present
                 "layout": layout if layout else None,
             }
 
+            # Add segments only if multiple styles detected
+            if segments:
+                caption_data["segments"] = segments
+
             if is_pop_on:
-                # Pop-on mode: load into buffer (will display at EOC)
+                # Pop-on mode: start new loading buffer (will display at EOC)
                 loading_caption = caption_data
             elif is_paint_on or is_roll_up:
                 # Paint-on/Roll-up mode: displays immediately
@@ -453,10 +754,11 @@ def parse_608_file(
                 displayed_caption = caption_data
             else:
                 # No explicit mode - check if we're continuing a previous mode
-                # Default to loading into buffer if no mode specified
                 if loading_caption is not None:
-                    # Continue loading (append to existing buffer)
-                    loading_caption = caption_data
+                    # Continue loading in pop-on mode - merge text intelligently
+                    _merge_caption_text(
+                        loading_caption, text, text_lines, style, segments
+                    )
                 elif displayed_caption is not None:
                     # Continue paint-on mode
                     displayed_caption["end"] = current_time

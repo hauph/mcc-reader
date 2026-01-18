@@ -5,7 +5,7 @@ from unittest.mock import patch
 pytest.importorskip("lingua", reason="lingua-language-detector library not installed")
 
 from MCCReader import MCCReader
-from MCCReader.constants import CEA608_FORMAT, CEA708_FORMAT
+from MCCReader.models import CEA608_FORMAT, CEA708_FORMAT
 
 SAMPLE_FILE_NAME = "NightOfTheLivingDead"
 

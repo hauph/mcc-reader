@@ -10,7 +10,7 @@ import subprocess
 from typing import Any, Dict
 
 
-from .constants import (
+from .models import (
     CEA608_FORMAT,
     CEA708_FORMAT,
     TEMP_OUTPUT_DIR,

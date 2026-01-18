@@ -1,0 +1,26 @@
+Decoded Line 21 / CEA-608 for Asset: samples/output/sample-C1 - Channel: 1
+00:00:00:17 - {RDC} {R15:C4} {TO2} "( heavy rock music )"
+00:00:02:09 - {EDM}
+00:00:02:22 - {RDC} {R14:C0} "[announcer] What do you look for" {R15:C4} {FG-Red} "in a recording studio?"
+00:00:04:16 - {RCL} {ENM} {R15:C4} {TO3} "Great drum tones?"
+00:00:04:29 - {EDM}
+00:00:05:00 - {EOC}
+00:00:06:03 - {RCL} {ENM} {R15:C4} {TO3} "Clean vocal takes?"
+00:00:06:16 - {EDM}
+00:00:06:17 - {EOC}
+00:00:07:25 - {RCL} {ENM} {R15:C4}
+00:00:07:28 - {EDM} "An experienced engineer?"
+00:00:08:11 - {EOC}
+00:00:09:20 - {RCL} {ENM} {R14:C0} {TO2} {FG-Blue} "At Negativ"
+00:00:10:00 - {EDM} "e Space Studios" {R15:C8} {TO1} "in Baltimore"
+00:00:10:17 - {EOC}
+00:00:11:26 - {RCL} {ENM} {R15:C0} {TO1} "we are committed to providing"
+00:00:12:15 - {EDM}
+00:00:12:16 - {EOC}
+00:00:12:26 - {RCL} {ENM} {R14:C8} {TO2} "high-quality" {R15:C4} {TO2} "recoding" {FG-Yellow} "and" {FG-White} "mixing."
+00:00:13:20 - {EDM}
+00:00:13:21 - {EOC}
+00:00:14:28 - {RCL} {ENM} {R14:C4} "Let us show you how good" {R15:C4} {TO2} "your music can sound."
+00:00:15:26 - {EDM}
+00:00:15:27 - {EOC}
+00:00:18:08 - {EDM}

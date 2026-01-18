@@ -3,134 +3,20 @@ from typing import Any, Dict, List
 
 from ..utils import timecode_to_microseconds
 
-# CEA-708 constants from Caption Inspector
-
-# Pen size mappings (from pen_size_trans_dict)
-PEN_SIZE_MAP = {
-    "small": "small",
-    "standard": "medium",
-    "large": "large",
-}
-
-# Pen offset mappings (from pen_offset_trans_dict)
-PEN_OFFSET_MAP = {
-    "subscript": "sub",
-    "normal": "normal",
-    "superscript": "super",
-}
-
-# Text tag mappings (from text_tag_trans_dict)
-TEXT_TAG_MAP = {
-    "dialog": "dialog",
-    "source or speaker id": "speaker",
-    "electronically reproduced voice": "electronic",
-    "dialog in other language": "foreign",
-    "voiceover": "voiceover",
-    "audible translation": "translation",
-    "subtitle translation": "subtitle",
-    "voice quality description": "voice_quality",
-    "song lyrics": "lyrics",
-    "sound effects description": "sound_effect",
-    "musical score description": "music",
-    "oath": "oath",
-    "invisible": "invisible",
-}
-
-# Font tag mappings (from font_tag_trans_dict / predef_pen_style_dict)
-FONT_TAG_MAP = {
-    "default": None,
-    "monospaced serif": "monospace, serif",
-    "monoserif": "monospace, serif",
-    "proportional serif": "serif",
-    "proportserif": "serif",
-    "propserif": "serif",
-    "monospaced sanserif": "monospace, sans-serif",
-    "monosanserif": "monospace, sans-serif",
-    "monosans": "monospace, sans-serif",
-    "proportional sanserif": "sans-serif",
-    "proportionsanserif": "sans-serif",
-    "propsans": "sans-serif",
-    "propsanserif": "sans-serif",
-    "casual": "cursive",
-    "cursive": "cursive",
-    "smallcaps": "small-caps",
-}
-
-# Edge type mappings (from edge_type_trans_dict)
-EDGE_TYPE_MAP = {
-    "none": None,
-    "raised": "raised",
-    "depressed": "depressed",
-    "uniform": "uniform",
-    "left drop shadow": "drop-shadow-left",
-    "right drop shadow": "drop-shadow-right",
-}
-
-# Opacity mappings (from opacity_trans_dict)
-OPACITY_MAP = {
-    "solid": 1.0,
-    "flash": "flash",
-    "translucent": 0.5,
-    "transparent": 0.0,
-}
-
-# Anchor point mappings (from anchor_trans_dict)
-ANCHOR_MAP = {
-    "ul": "upper-left",
-    "uc": "upper-center",
-    "ur": "upper-right",
-    "ml": "middle-left",
-    "mc": "middle-center",
-    "mr": "middle-right",
-    "ll": "lower-left",
-    "lc": "lower-center",
-    "lr": "lower-right",
-}
-
-# Pre-defined window styles (from predef_win_style_dict)
-WINDOW_STYLE_MAP = {
-    "608-popup": "pop-on",
-    "popup-transbg": "pop-on",
-    "popup-centered": "pop-on",
-    "608-rollup": "roll-up",
-    "rollup-transbg": "roll-up",
-    "rollup-centered": "roll-up",
-    "tickertape": "ticker",
-}
-
-# Border type mappings (from border_type_trans_dict)
-BORDER_TYPE_MAP = {
-    "none": None,
-    "raised": "raised",
-    "depressed": "depressed",
-    "uniform": "uniform",
-    "shadow left": "shadow-left",
-    "shadow right": "shadow-right",
-}
-
-# Direction mappings (from direction_trans_dict)
-DIRECTION_MAP = {
-    "ltor": "left-to-right",
-    "rtol": "right-to-left",
-    "ttob": "top-to-bottom",
-    "btot": "bottom-to-top",
-}
-
-# Justify mappings (from justify_trans_dict)
-JUSTIFY_MAP = {
-    "l/t": "left",
-    "r/b": "right",
-    "cntr": "center",
-    "full": "justify",
-}
-
-# Display effect mappings (from display_effect_trans_dict)
-DISPLAY_EFFECT_MAP = {
-    "snap": "snap",
-    "fade": "fade",
-    "wipe": "wipe",
-    "mask": "mask",
-}
+from ..models import (
+    PEN_SIZE_MAP,
+    PEN_OFFSET_MAP,
+    TEXT_TAG_MAP,
+    FONT_TAG_MAP,
+    EDGE_TYPE_MAP,
+    OPACITY_MAP,
+    DISPLAY_EFFECT_MAP,
+    DIRECTION_MAP,
+    JUSTIFY_MAP,
+    BORDER_TYPE_MAP,
+    ANCHOR_MAP,
+    WINDOW_STYLE_MAP,
+)
 
 
 def cea708_color_to_rgb(r: int, g: int, b: int) -> str:
@@ -327,12 +213,202 @@ def parse_708_style(content: str) -> Dict[str, Any]:
     return style
 
 
+def parse_708_text_segments(
+    content: str,
+) -> tuple[str, Dict[str, Any] | None, List[Dict[str, Any]] | None]:
+    """
+    Parse CEA-708 content to extract text with style segments.
+
+    Style commands (SPC, SPA) apply to all subsequent text until changed.
+    This function tracks style changes and associates each text segment
+    with its applicable style.
+
+    Args:
+        content: The content string containing style and position codes
+
+    Returns:
+        Tuple of (full_text, style, segments):
+        - full_text: Complete text with newlines
+        - style: Single style dict if all text has same style, None if multiple styles
+        - segments: List of {text, style} dicts if multiple styles, None if single style
+    """
+    # Find all style commands and their positions in the content
+    # Pattern matches {SPC:...} or {SPA:...}
+    style_pattern = re.compile(r"\{(SPC|SPA):([^}]+)\}")
+
+    # Find all quoted text and their positions
+    text_pattern = re.compile(r'"([^"]*)"')
+
+    # Find all SPL position markers
+    spl_pattern = re.compile(r"\{SPL:R(\d+)-C(\d+)\}")
+
+    # Build list of (position, type, data) tuples for sequential processing
+    events = []
+
+    # Collect style commands
+    for match in style_pattern.finditer(content):
+        cmd_type = match.group(1)  # SPC or SPA
+        cmd_content = match.group(2)
+        events.append((match.start(), "style", (cmd_type, cmd_content)))
+
+    # Collect text segments
+    for match in text_pattern.finditer(content):
+        text = match.group(1)
+        if text:  # Skip empty strings
+            events.append((match.start(), "text", text))
+
+    # Collect SPL position markers
+    for match in spl_pattern.finditer(content):
+        row = int(match.group(1))
+        col = int(match.group(2))
+        events.append((match.start(), "spl", (row, col)))
+
+    # Sort events by position
+    events.sort(key=lambda x: x[0])
+
+    # Process events sequentially, tracking current style and row
+    current_style = {}
+    current_row = 0
+    segments = []
+
+    # Extract font from window definition (DF) as base style
+    df_match = re.search(r"\{DF\d+:[^}]*Pen-([A-Za-z]+)", content)
+    if df_match:
+        font = df_match.group(1).lower()
+        if font in FONT_TAG_MAP and FONT_TAG_MAP[font]:
+            current_style["font-family"] = FONT_TAG_MAP[font]
+
+    for _, event_type, data in events:
+        if event_type == "style":
+            cmd_type, cmd_content = data
+            if cmd_type == "SPC":
+                # Parse SPC command and update current style
+                fg_match = re.search(r"FG-(\w+)-R([0-3])G([0-3])B([0-3])", cmd_content)
+                if fg_match:
+                    opacity_str = fg_match.group(1)
+                    r = int(fg_match.group(2))
+                    g = int(fg_match.group(3))
+                    b = int(fg_match.group(4))
+                    current_style["color"] = cea708_color_to_rgb(r, g, b)
+                    current_style["color_raw"] = {"r": r, "g": g, "b": b}
+                    current_style["opacity"] = cea708_opacity_to_css(opacity_str)
+                    current_style["opacity_raw"] = opacity_str.lower()
+
+                bg_match = re.search(r"BG-(\w+)-R([0-3])G([0-3])B([0-3])", cmd_content)
+                if bg_match:
+                    opacity_str = bg_match.group(1)
+                    r = int(bg_match.group(2))
+                    g = int(bg_match.group(3))
+                    b = int(bg_match.group(4))
+                    current_style["background-color"] = cea708_color_to_rgb(r, g, b)
+                    current_style["background_color_raw"] = {"r": r, "g": g, "b": b}
+                    current_style["background_opacity"] = cea708_opacity_to_css(
+                        opacity_str
+                    )
+                    current_style["background_opacity_raw"] = opacity_str.lower()
+
+                edge_match = re.search(r"Edg-R([0-3])G([0-3])B([0-3])", cmd_content)
+                if edge_match:
+                    r = int(edge_match.group(1))
+                    g = int(edge_match.group(2))
+                    b = int(edge_match.group(3))
+                    current_style["edge_color"] = cea708_color_to_rgb(r, g, b)
+                    current_style["edge_color_raw"] = {"r": r, "g": g, "b": b}
+
+            elif cmd_type == "SPA":
+                # Parse SPA command and update current style
+                size_match = re.search(r"Size:(\w+)", cmd_content)
+                if size_match:
+                    size = size_match.group(1).lower()
+                    current_style["font-size"] = PEN_SIZE_MAP.get(size, size)
+
+                offset_match = re.search(r"Offset:(\w+)", cmd_content)
+                if offset_match:
+                    offset = offset_match.group(1).lower()
+                    if offset in PEN_OFFSET_MAP and PEN_OFFSET_MAP[offset] != "normal":
+                        current_style["vertical-align"] = PEN_OFFSET_MAP[offset]
+
+                if ":UL" in cmd_content or cmd_content.endswith("UL"):
+                    current_style["text-decoration"] = "underline"
+                elif "text-decoration" in current_style:
+                    del current_style["text-decoration"]
+
+                if ":IT" in cmd_content or cmd_content.endswith("IT"):
+                    current_style["font-style"] = "italic"
+                elif "font-style" in current_style:
+                    del current_style["font-style"]
+
+                if ":BL" in cmd_content or cmd_content.endswith("BL"):
+                    current_style["font-weight"] = "bold"
+                elif "font-weight" in current_style:
+                    del current_style["font-weight"]
+
+        elif event_type == "spl":
+            row, col = data
+            current_row = row
+
+        elif event_type == "text":
+            text = data
+            segments.append(
+                {
+                    "text": text,
+                    "style": dict(current_style) if current_style else None,
+                    "row": current_row,
+                }
+            )
+
+    if not segments:
+        return "", None, None
+
+    # Sort segments by row
+    segments.sort(key=lambda x: x["row"])
+
+    # Build full text with newlines between different rows
+    full_text_parts = []
+    prev_row = None
+    for seg in segments:
+        if prev_row is not None and seg["row"] != prev_row:
+            # Add newline when row changes
+            if full_text_parts:
+                full_text_parts[-1] = full_text_parts[-1] + "\n"
+        full_text_parts.append(seg["text"])
+        prev_row = seg["row"]
+
+    full_text = "".join(full_text_parts)
+
+    # Check if all segments have the same style
+    styles = [seg["style"] for seg in segments]
+    all_same_style = all(s == styles[0] for s in styles)
+
+    if all_same_style:
+        # Single style - return style at top level, no segments
+        return full_text, styles[0], None
+    else:
+        # Multiple styles - build segments with text including newlines
+        result_segments = []
+        for i, seg in enumerate(segments):
+            seg_text = seg["text"]
+            # Add newline to text if row changes after this segment
+            if i < len(segments) - 1 and segments[i + 1]["row"] != seg["row"]:
+                seg_text += "\n"
+            result_seg = {"text": seg_text}
+            if seg["style"]:
+                result_seg["style"] = seg["style"]
+            result_segments.append(result_seg)
+
+        return full_text, None, result_segments
+
+
 def parse_708_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any]]]:
     """
     Parse CEA-708 content to extract text with line breaks based on pen positions.
 
     Caption Inspector format: {SPL:R<row>-C<col>}
     When pen position row changes, insert a line break.
+
+    Text can appear:
+    - After {SPL:R#-C#} tags (explicit position)
+    - Before any SPL tag (uses row from window definition or default row 0)
 
     Args:
         content: The content string containing position codes and text
@@ -342,11 +418,14 @@ def parse_708_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
     """
     lines = []
 
+    # Default row for text that appears before any SPL position tag
+    default_row = 0
+
+    # Split content by SPL tags, keeping track of text before first SPL
     # Pattern to match {SPL:R#-C#} followed by text in quotes
-    # Example: {SPL:R1-C12} "I was thinking we" {SPL:R0-C16} "So, for Mom"
     segments = re.split(r"(?=\{SPL:R\d+-C\d+\})", content)
 
-    for segment in segments:
+    for i, segment in enumerate(segments):
         if not segment.strip():
             continue
 
@@ -355,10 +434,20 @@ def parse_708_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
         # Extract text from this segment
         text_matches = re.findall(r'"([^"]*)"', segment)
 
-        if spl_match and text_matches:
-            row = int(spl_match.group(1))
-            col = int(spl_match.group(2))
+        if text_matches:
             text = " ".join(text_matches).strip()
+            if not text:
+                continue
+
+            if spl_match:
+                # Text after SPL tag - use explicit position
+                row = int(spl_match.group(1))
+                col = int(spl_match.group(2))
+            else:
+                # Text before any SPL tag - use default position (row 0)
+                # This handles cases like: {DF1:...} {SPC:...} "text" {SPL:R1-C0} "more text"
+                row = default_row
+                col = 0
 
             lines.append(
                 {
@@ -639,8 +728,8 @@ def parse_708_file(
             # New caption: text with either DSW (display) or DF (window definition with text)
             if text and (has_dsw or has_df):
                 # New caption being displayed
-                # Extract style and layout information
-                style = parse_708_style(content)
+                # Extract style and layout information using segment-aware parsing
+                _, style, segments = parse_708_text_segments(content)
                 layout = parse_708_layout(content)
 
                 # Add the individual lines with positions to layout
@@ -662,9 +751,13 @@ def parse_708_file(
                     "end": None,
                     "end_timecode": None,
                     "text": text,
-                    "style": style if style else None,
+                    "style": style,  # None if segments are present
                     "layout": layout if layout else None,
                 }
+
+                # Add segments only if multiple styles detected
+                if segments:
+                    current_caption["segments"] = segments
 
             elif (has_dlw or has_clw) and current_caption:
                 # Caption being deleted/cleared - end the current caption
@@ -677,7 +770,7 @@ def parse_708_file(
 
             elif text and not current_caption:
                 # Text without DSW - might be continuation or first caption
-                style = parse_708_style(content)
+                _, style, segments = parse_708_text_segments(content)
                 layout = parse_708_layout(content)
 
                 if text_lines:
@@ -689,9 +782,13 @@ def parse_708_file(
                     "end": None,
                     "end_timecode": None,
                     "text": text,
-                    "style": style if style else None,
+                    "style": style,  # None if segments are present
                     "layout": layout if layout else None,
                 }
+
+                # Add segments only if multiple styles detected
+                if segments:
+                    current_caption["segments"] = segments
 
         else:
             # Header line or line without timecode - check for text

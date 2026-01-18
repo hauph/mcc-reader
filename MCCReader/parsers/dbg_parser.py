@@ -2,7 +2,7 @@ from typing import Dict, List
 import glob
 import os
 import re
-from ..constants import DEBUG_LEVELS
+from ..models import DEBUG_LEVELS
 
 
 def parse_debug_file(output_dir: str) -> Dict[str, List[Dict[str, str]]]:

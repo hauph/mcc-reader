@@ -4,7 +4,7 @@ import subprocess
 from unittest.mock import patch, MagicMock
 
 from MCCReader.decoder import decode_mcc_file, parse_caption_files
-from MCCReader.constants import CEA608_FORMAT, CEA708_FORMAT
+from MCCReader.models import CEA608_FORMAT, CEA708_FORMAT
 
 OUTPUT_DIR = "samples/output"
 

@@ -1,0 +1,28 @@
+Decoded DTVCC / CEA-708 for Asset: samples/output/sample-S1.708 - Service: 1
+00:00:00:17 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C29:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0:VIS} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C10} "( heavy rock music )"
+00:00:02:21 - {DLW:11111111}
+00:00:02:22 - {DLW:11111111} {DF1:PopUp-Cntrd:R1-C31:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0:VIS} {SPC:FG-Solid-R3G3B3:BG-Solid-R0G0B0:Edg-R1G1B1} "[announcer] What do you look for" {SPC:FG-Solid-R3G0B0:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R1-C0} "in a recording studio?"
+00:00:02:27 - {DLW:11111111}
+00:00:02:28 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C28:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C12} "Great drum tones?"
+00:00:06:17 - {CLW:00000000}
+00:00:06:17 - {TGW:11111111}
+00:00:06:18 - {DLW:11111110} {DF1:PopUp-Cntrd:R0-C29:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C12} "Clean vocal takes?"
+00:00:07:28 - {CLW:00000001}
+00:00:07:28 - {TGW:11111111}
+00:00:07:29 - {DLW:11111101} {DF0:PopUp-Cntrd:R0-C32:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C9} "An experienced engineer?"
+00:00:08:12 - {DLW:00000010}
+00:00:10:00 - {CLW:00000000}
+00:00:10:00 - {TGW:11111111}
+00:00:10:01 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C32:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R0G0B3:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C8} "At Negative Space Studios" {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R1-C14} "in Baltimore"
+00:00:10:18 - {DLW:00000001}
+00:00:12:16 - {CLW:00000000}
+00:00:12:16 - {TGW:11111111}
+00:00:12:17 - {DLW:11111101} {DF0:PopUp-Cntrd:R0-C34:Anchor-UL-V70-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C6} "we are committed to providing"
+00:00:13:21 - {CLW:00000010}
+00:00:13:21 - {TGW:11111111}
+00:00:13:22 - {DLW:11111110} {DF1:PopUp-Cntrd:R1-C29:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R1-C10} "recoding " {SPC:FG-Solid-R2G2B0:BG-Solid-R0G0B0:Edg-R1G1B1} "and " {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} "mixing." {SPL:R0-C14} "high-quality"
+00:00:15:27 - {CLW:00000001}
+00:00:15:27 - {TGW:11111111}
+00:00:15:28 - {DLW:11111101} {DF0:PopUp-Cntrd:R1-C32:Anchor-UL-V65-H0:Pen-MonoSerif:Pr-0} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} {SPL:R0-C9} "Let us show you how good" {SPL:R1-C11} "your music can sound."
+00:00:18:08 - {CLW:00000010}
+00:00:18:08 - {TGW:11111111}
