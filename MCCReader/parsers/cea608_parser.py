@@ -6,111 +6,6 @@ from ..utils import timecode_to_microseconds
 from ..models import MIDROW_FG_STYLES, MIDROW_BG_COLORS, PAC_COLORS, CONTROL_CODES
 
 
-def parse_608_style(content: str) -> Dict[str, Any]:
-    """
-    Extract style information from CEA-608 content.
-
-    Caption Inspector formats:
-    - Foreground/style: {FG-<style>:PT:UL} where style can be color or "Italic White"
-    - Background: {BG-<color>:PT:UL}
-    - PAC with color: {R<row>:<color>:UL}
-    - PAC with cursor: {R<row>:C<col>:UL}
-
-    IMPORTANT: Style codes only apply to text that comes AFTER them.
-    A style code that appears after all text in a line does NOT apply to that text.
-
-    Args:
-        content: The content string containing style codes
-
-    Returns:
-        Dictionary with CSS-like styling rules
-    """
-    style = {}
-
-    # Find the position of the first text segment (quoted text)
-    # Style codes must appear BEFORE text to apply to it
-    first_text_match = re.search(r'"[^"]*"', content)
-    first_text_pos = first_text_match.start() if first_text_match else len(content)
-
-    # Only look at content BEFORE the first text for style codes
-    # that should apply to the text
-    content_before_text = content[:first_text_pos]
-
-    # Extract foreground color/style: {FG-Italic-White:PT:UL}, {FG-White}, etc.
-    # Caption Inspector format from MidRowControlCode.__str__(): '{FG-' + self.style + ...
-    fg_match = re.search(r"\{FG-([^}]+)\}", content_before_text)
-    if fg_match:
-        fg_content = fg_match.group(1)
-
-        # Split by colon to separate style from flags
-        parts = fg_content.split(":")
-        fg_style = parts[0]
-        fg_flags = ":".join(parts[1:]) if len(parts) > 1 else ""
-
-        # Handle "Italic White" as a special combo (hyphenated in output)
-        fg_style_normalized = fg_style.replace("-", " ").lower().strip()
-
-        if fg_style_normalized == "italic white":
-            style["font-style"] = "italic"
-            style["color"] = "white"
-        elif fg_style_normalized in MIDROW_FG_STYLES:
-            style["color"] = fg_style_normalized
-        else:
-            # Try individual parts (e.g., "Italic-White" split)
-            style_parts = fg_style.split("-")
-            for part in style_parts:
-                part_lower = part.lower().strip()
-                if part_lower in MIDROW_FG_STYLES:
-                    style["color"] = part_lower
-                elif part_lower == "italic":
-                    style["font-style"] = "italic"
-
-        # Check flags (PT = Partially Transparent, UL = Underline)
-        if "PT" in fg_flags:
-            style["partially_transparent"] = True
-        if "UL" in fg_flags:
-            style["text-decoration"] = "underline"
-
-    # Extract background color: {BG-<color>:PT:UL}
-    # Caption Inspector format from MidRowControlCode.__str__(): '{BG-' + self.color + ...
-    bg_match = re.search(r"\{BG-([^}:]+)(?::([^}]+))?\}", content_before_text)
-    if bg_match:
-        bg_color = bg_match.group(1).lower()
-        bg_flags = bg_match.group(2) or ""
-
-        if bg_color in MIDROW_BG_COLORS:
-            style["background-color"] = bg_color
-
-        if "PT" in bg_flags:
-            style["background_partially_transparent"] = True
-        if "UL" in bg_flags:
-            style["text-decoration"] = "underline"
-
-    # Extract standalone PAC color codes like {R4:Yellow} or {R4:Yellow:UL}
-    # Caption Inspector format from PreambleAccessCode.__str__(): '{R' + row + ':' + color + ...
-    # Only consider PAC codes that appear BEFORE the first text
-    color_match = re.search(
-        r"\{R\d+:([A-Za-z][A-Za-z ]+)(?::UL)?\}", content_before_text
-    )
-    if color_match and "color" not in style:
-        color = color_match.group(1).lower()
-        if color == "italic white":
-            style["color"] = "white"
-            style["font-style"] = "italic"
-        elif color in PAC_COLORS:
-            style["color"] = color
-
-    # Check for underline in PAC format: {R<row>:<something>:UL}
-    if re.search(r"\{R\d+:[^}]+:UL\}", content_before_text):
-        style["text-decoration"] = "underline"
-
-    # Check for standalone underline marker (only before text)
-    if "{UL}" in content_before_text:
-        style["text-decoration"] = "underline"
-
-    return style
-
-
 def parse_608_text_segments(
     content: str,
 ) -> tuple[str, Dict[str, Any] | None, List[Dict[str, Any]] | None]:
@@ -141,8 +36,10 @@ def parse_608_text_segments(
     pac_pos_pattern = re.compile(r"\{R(\d+):C(\d+)(?::UL)?\}")
     # Standalone underline
     ul_pattern = re.compile(r"\{UL\}")
-    # Text pattern
+    # Text pattern - matches properly quoted text
     text_pattern = re.compile(r'"([^"]*)"')
+    # Pattern for unclosed quotes at end of content (truncated files)
+    unclosed_text_pattern = re.compile(r'"([^"]+)$')
 
     # Build list of (position, type, data) tuples
     events = []
@@ -175,11 +72,21 @@ def parse_608_text_segments(
     for match in ul_pattern.finditer(content):
         events.append((match.start(), "ul", True))
 
-    # Collect text segments
+    # Collect text segments (properly quoted)
+    matched_texts = set()
     for match in text_pattern.finditer(content):
         text = match.group(1)
         if text:  # Skip empty strings
             events.append((match.start(), "text", text))
+            matched_texts.add(match.group(0))
+
+    # Also capture unclosed quotes at end of content
+    unclosed_match = unclosed_text_pattern.search(content)
+    if unclosed_match:
+        # Check this wasn't already matched as a closed quote
+        unclosed_text = unclosed_match.group(1)
+        if unclosed_text and f'"{unclosed_text}"' not in content:
+            events.append((unclosed_match.start(), "text", unclosed_text))
 
     # Sort events by position
     events.sort(key=lambda x: x[0])
@@ -343,8 +250,13 @@ def parse_608_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
 
         # Extract row/column from this segment (format: {R<row>:C<col>...})
         row_match = re.search(r"\{R(\d+):C(\d+)", segment)
-        # Extract text from this segment
+        # Extract text from this segment - handle both closed and unclosed quotes
+        # First try properly quoted text
         text_matches = re.findall(r'"([^"]*)"', segment)
+        # Also capture text with unclosed quotes at end of content (truncated files)
+        unclosed_match = re.search(r'"([^"]+)$', segment)
+        if unclosed_match and unclosed_match.group(1) not in text_matches:
+            text_matches.append(unclosed_match.group(1))
 
         if text_matches:
             text = " ".join(text_matches).strip()
@@ -484,7 +396,7 @@ def parse_608_layout(content: str) -> Dict[str, Any]:
     return layout
 
 
-def _merge_caption_text(
+def merge_caption_text(
     caption: Dict[str, Any],
     new_text: str,
     new_lines: List[Dict[str, Any]],
@@ -756,7 +668,7 @@ def parse_608_file(
                 # No explicit mode - check if we're continuing a previous mode
                 if loading_caption is not None:
                     # Continue loading in pop-on mode - merge text intelligently
-                    _merge_caption_text(
+                    merge_caption_text(
                         loading_caption, text, text_lines, style, segments
                     )
                 elif displayed_caption is not None:

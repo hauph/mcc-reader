@@ -58,23 +58,6 @@ PEN_OFFSET_MAP = {
     "superscript": "super",
 }
 
-# Text tag mappings (from text_tag_trans_dict)
-TEXT_TAG_MAP = {
-    "dialog": "dialog",
-    "source or speaker id": "speaker",
-    "electronically reproduced voice": "electronic",
-    "dialog in other language": "foreign",
-    "voiceover": "voiceover",
-    "audible translation": "translation",
-    "subtitle translation": "subtitle",
-    "voice quality description": "voice_quality",
-    "song lyrics": "lyrics",
-    "sound effects description": "sound_effect",
-    "musical score description": "music",
-    "oath": "oath",
-    "invisible": "invisible",
-}
-
 # Font tag mappings (from font_tag_trans_dict / predef_pen_style_dict)
 FONT_TAG_MAP = {
     "default": None,
@@ -93,16 +76,6 @@ FONT_TAG_MAP = {
     "casual": "cursive",
     "cursive": "cursive",
     "smallcaps": "small-caps",
-}
-
-# Edge type mappings (from edge_type_trans_dict)
-EDGE_TYPE_MAP = {
-    "none": None,
-    "raised": "raised",
-    "depressed": "depressed",
-    "uniform": "uniform",
-    "left drop shadow": "drop-shadow-left",
-    "right drop shadow": "drop-shadow-right",
 }
 
 # Opacity mappings (from opacity_trans_dict)

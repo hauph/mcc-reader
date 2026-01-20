@@ -2,11 +2,114 @@ import pytest
 from MCCReader.parsers.cea708_parser import (
     cea708_color_to_rgb,
     cea708_opacity_to_css,
-    parse_708_style,
     parse_708_text_with_positions,
     parse_708_layout,
     parse_708_file,
+    decode_p16_character,
+    extract_text_with_p16,
 )
+
+
+class TestDecodeP16Character:
+    """Tests for decode_p16_character function (single hex value to Unicode)."""
+
+    def test_decode_arabic_alef(self):
+        """Should decode Arabic letter Alef (U+0627)."""
+        result = decode_p16_character("0627")
+        assert result == "ا"
+
+    def test_decode_arabic_ba(self):
+        """Should decode Arabic letter Ba (U+0628)."""
+        result = decode_p16_character("0628")
+        assert result == "ب"
+
+    def test_decode_chinese_character(self):
+        """Should decode Chinese character (U+4E2D)."""
+        result = decode_p16_character("4E2D")
+        assert result == "中"
+
+    def test_decode_persian_kaf(self):
+        """Should decode Persian Kaf (U+06A9)."""
+        result = decode_p16_character("06A9")
+        assert result == "ک"
+
+    def test_decode_japanese_hiragana(self):
+        """Should decode Japanese Hiragana (U+3042)."""
+        result = decode_p16_character("3042")
+        assert result == "あ"
+
+    def test_decode_korean(self):
+        """Should decode Korean Hangul (U+D55C)."""
+        result = decode_p16_character("D55C")
+        assert result == "한"
+
+    def test_decode_ascii(self):
+        """Should decode ASCII character (U+0041 = A)."""
+        result = decode_p16_character("0041")
+        assert result == "A"
+
+    def test_invalid_hex_returns_empty(self):
+        """Should return empty string for invalid hex."""
+        result = decode_p16_character("ZZZZ")
+        assert result == ""
+
+    def test_empty_string_returns_empty(self):
+        """Should return empty string for empty input."""
+        result = decode_p16_character("")
+        assert result == ""
+
+
+class TestExtractTextWithP16:
+    """Tests for extract_text_with_p16 function - handles P16 outside quotes."""
+
+    def test_extract_p16_outside_quotes(self):
+        """Should extract P16 sequences that appear outside of quoted text."""
+        # This is how Caption Inspector outputs Farsi/Arabic text
+        content = '"-" {P16:0x06A9} {P16:0x0647} " " {P16:0x06A9}'
+        result = extract_text_with_p16(content)
+        # "-" + ک (0x06A9) + ه (0x0647) + " " (space) + ک (0x06A9)
+        assert result == "-که ک"
+
+    def test_extract_farsi_text(self):
+        """Should properly extract Farsi text from mixed content."""
+        # Real example from S6.708 file
+        content = '"-2020." {SPL:R1-C0} "-" {P16:0x06A9} {P16:0x0647} " " {P16:0x06A9} {P16:0x0634} {P16:0x0634} " " {P16:0x0627} {P16:0x0633} {P16:0x062A} "."'
+        result = extract_text_with_p16(content)
+        # -2020. -که کشش است.
+        assert "2020" in result
+        assert "که" in result  # Farsi word
+        assert "است" in result  # Farsi word for "is"
+
+    def test_extract_only_quoted_text(self):
+        """Should work with just quoted text (no P16)."""
+        content = '"Hello" " " "World"'
+        result = extract_text_with_p16(content)
+        assert result == "Hello World"
+
+    def test_extract_only_p16(self):
+        """Should work with only P16 sequences."""
+        content = "{P16:0x0041}{P16:0x0042}{P16:0x0043}"  # ABC
+        result = extract_text_with_p16(content)
+        assert result == "ABC"
+
+    def test_extract_empty_content(self):
+        """Should handle empty content."""
+        result = extract_text_with_p16("")
+        assert result == ""
+
+    def test_extract_persian_kaf(self):
+        """Should decode Persian Kaf (ک) correctly."""
+        content = "{P16:0x06A9}"  # Persian Kaf
+        result = extract_text_with_p16(content)
+        assert result == "ک"
+
+    def test_extract_with_control_codes_ignored(self):
+        """Should ignore control codes like ETX, NUL."""
+        content = '"{P16:0x0645}" {ETX} {NUL} "text"'
+        result = extract_text_with_p16(content)
+        # The {P16:...} inside quotes won't be decoded by extract_text_with_p16
+        # but outer P16 sequences would be
+        assert "text" in result
 
 
 class TestCea708ColorToRgb:
@@ -73,60 +176,6 @@ class TestCea708OpacityToCss:
         assert cea708_opacity_to_css(-1) == "solid"
 
 
-class TestParse708Style:
-    """Tests for parse_708_style function."""
-
-    def test_extract_rgb_color(self):
-        """Should extract RGB color from content."""
-        content = '{SPL:R0-C10} R2G3B1 "Hello"'
-        style = parse_708_style(content)
-        # R2→170=0xAA, G3→255=0xFF, B1→85=0x55
-        assert style["color"] == "#AAFF55"
-        assert style["color_raw"] == {"r": 2, "g": 3, "b": 1}
-
-    def test_extract_italic_from_spa(self):
-        """Should extract italic style from SPA tag."""
-        content = "{SPA:Pen-[Size:Standard,Offset:Normal]:TextTag-Dialog:FontTag-Default:EdgeType-None:IT}"
-        style = parse_708_style(content)
-        assert style["font-style"] == "italic"
-
-    def test_extract_font_size(self):
-        """Should extract font size from SPA tag."""
-        content = "{SPA:Pen-[Size:Large,Offset:Normal]:TextTag-Dialog}"
-        style = parse_708_style(content)
-        assert style["font-size"] == "large"
-
-    def test_extract_underline(self):
-        """Should extract underline from SPA tag."""
-        content = "{SPA:Pen-[Size:Standard]:UL}"
-        style = parse_708_style(content)
-        assert style["text-decoration"] == "underline"
-
-    def test_extract_bold(self):
-        """Should extract bold from SPA tag."""
-        content = "{SPA:Pen-[Size:Standard]:BL}"
-        style = parse_708_style(content)
-        assert style["font-weight"] == "bold"
-
-    def test_extract_edge_type(self):
-        """Should extract edge type from SPA tag."""
-        content = "{SPA:EdgeType-Raised}"
-        style = parse_708_style(content)
-        assert style["text-edge"] == "raised"
-
-    def test_no_style_returns_empty(self):
-        """Should return empty dict when no style codes present."""
-        content = '"Just plain text"'
-        style = parse_708_style(content)
-        assert style == {}
-
-    def test_extract_font_family(self):
-        """Should extract font family from Pen definition."""
-        content = "Pen-PropSans"
-        style = parse_708_style(content)
-        assert style["font-family"] == "sans-serif"
-
-
 class TestParse708TextWithPositions:
     """Tests for parse_708_text_with_positions function."""
 
@@ -166,6 +215,22 @@ class TestParse708TextWithPositions:
         assert lines[1]["row"] == 1
         assert lines[2]["row"] == 2
         assert text == "First\nSecond\nThird"
+
+    def test_unclosed_quote_at_end(self):
+        """Should extract text from unclosed quotes at end of content (truncated files)."""
+        content = '{SPL:R0-C10} "[background chatter]'
+        text, lines = parse_708_text_with_positions(content)
+        assert text == "[background chatter]"
+        assert len(lines) == 1
+        assert lines[0]["text"] == "[background chatter]"
+
+    def test_mixed_closed_and_unclosed_quotes(self):
+        """Should handle both closed quotes and unclosed quote at end."""
+        content = '{SPL:R0-C0} "First line" {SPL:R1-C0} "Second line'
+        text, lines = parse_708_text_with_positions(content)
+        assert "First line" in text
+        assert "Second line" in text
+        assert len(lines) == 2
 
 
 class TestParse708Layout:
@@ -362,3 +427,50 @@ class TestParse708File:
         assert len(captions) == 1
         # End time is None when unknown - consuming application decides
         assert captions[0]["end"] is None
+
+    def test_parse_with_p16_characters(self, tmp_path):
+        """Should decode P16 extended characters (e.g., Farsi) that appear OUTSIDE quotes."""
+        # This is the actual format from Caption Inspector - P16 sequences are outside quotes
+        file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 6
+00:00:01:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPL:R0-C10} "-" {P16:0x06A9} {P16:0x0647} " " {P16:0x06A9} {P16:0x0634} {P16:0x0634} "."
+"""
+        test_file = tmp_path / "test.708"
+        test_file.write_text(file_content)
+
+        captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        # Should contain Farsi characters: که کشش (keh kashesh)
+        assert "که" in captions[0]["text"]
+        assert "کشش" in captions[0]["text"]
+
+    def test_parse_mixed_ascii_and_p16(self, tmp_path):
+        """Should handle mixed ASCII and P16 content (P16 outside quotes)."""
+        file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 1
+00:00:01:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPL:R0-C10} "Hello " {P16:0x4E16} {P16:0x754C} " World"
+"""
+        test_file = tmp_path / "test.708"
+        test_file.write_text(file_content)
+
+        captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        assert "Hello" in captions[0]["text"]
+        assert "世界" in captions[0]["text"]  # Chinese "world" decoded
+        assert "World" in captions[0]["text"]
+
+    def test_parse_real_farsi_line(self, tmp_path):
+        """Should parse real Farsi content from S6.708 format."""
+        # Actual line from BigBuckBunny S6.708
+        file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 6
+00:00:00:02 - {DLW:00000001} {DF0:PopUp-Cntrd:R1-C41:Anchor-UL-V65-H55:Pen-MonoSerif:Pr-0} {SPL:R0-C6} {SPC:FG-Solid-R2G2B2:BG-Solid-R0G0B0:Edg-R1G1B1} "-2020." {SPL:R1-C0} "-" {P16:0x06A9} {P16:0x0647} " " {P16:0x06A9} {P16:0x0634} {P16:0x0634} " " {P16:0x0627} {P16:0x0633} {P16:0x062A} "."
+"""
+        test_file = tmp_path / "test.708"
+        test_file.write_text(file_content)
+
+        captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        # Should contain: -2020. and Farsi text
+        assert "2020" in captions[0]["text"]
+        assert "است" in captions[0]["text"]  # Farsi word for "is"

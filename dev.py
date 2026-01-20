@@ -1,9 +1,12 @@
 from MCCReader import MCCReader
+import json
 
 reader = MCCReader()
-reader.read("samples/NightOfTheLivingDead.mcc", output_dir="samples/output")
-
-print("Original result: ", reader.get_original_result())
+reader.read("samples/sample copy.MCC", output_dir="samples/output")
+result = reader.get_original_result()
+# print(result)
+with open("samples/output/result.json", "w") as f:
+    f.write(json.dumps(result, indent=4))
 
 # print("Tracks: ", reader.get_tracks())
 # print("Tracks: ", reader.get_tracks("cea608"))

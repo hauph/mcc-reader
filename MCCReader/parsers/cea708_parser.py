@@ -6,9 +6,7 @@ from ..utils import timecode_to_microseconds
 from ..models import (
     PEN_SIZE_MAP,
     PEN_OFFSET_MAP,
-    TEXT_TAG_MAP,
     FONT_TAG_MAP,
-    EDGE_TYPE_MAP,
     OPACITY_MAP,
     DISPLAY_EFFECT_MAP,
     DIRECTION_MAP,
@@ -17,6 +15,111 @@ from ..models import (
     ANCHOR_MAP,
     WINDOW_STYLE_MAP,
 )
+
+
+def decode_p16_character(hex_value: str) -> str:
+    """
+    Decode a single P16 hex value to its Unicode character.
+
+    Args:
+        hex_value: 4-digit hex string (e.g., "06A9")
+
+    Returns:
+        The Unicode character or empty string if invalid
+    """
+    try:
+        code_point = int(hex_value, 16)
+        if 0 <= code_point <= 0x10FFFF:
+            return chr(code_point)
+    except (ValueError, OverflowError):
+        pass
+    return ""
+
+
+def decode_ext1_character(hex_value: str) -> str:
+    """
+    Decode a single EXT1 hex value to its character.
+
+    Args:
+        hex_value: 2-digit hex string (e.g., "A9")
+
+    Returns:
+        The character or empty string if invalid
+    """
+    try:
+        code_point = int(hex_value, 16)
+        if 0 <= code_point <= 0xFF:
+            return chr(code_point)
+    except (ValueError, OverflowError):
+        pass
+    return ""
+
+
+def extract_text_with_p16(content: str) -> str:
+    """
+    Extract text from CEA-708 content, including P16/EXT1 extended characters.
+
+    In Caption Inspector output, P16 sequences appear OUTSIDE of quoted text:
+    Example: "-" {P16:0x06A9} {P16:0x0647} " " {P16:0x06A9}
+
+    This function extracts all text elements (quoted strings and P16/EXT1 sequences)
+    in order and concatenates them to form the complete text.
+
+    Control codes like {ETX}, {NUL}, {SPL:...}, {SPC:...}, etc. are ignored.
+
+    Args:
+        content: The content string containing text and P16/EXT1 sequences
+
+    Returns:
+        Extracted text with P16/EXT1 decoded to Unicode characters
+    """
+    if not content:
+        return ""
+
+    result_parts = []
+
+    # Pattern to match text elements in order:
+    # - Quoted text: "..."
+    # - P16 sequences: {P16:0xXXXX} or {P16:XXXX}
+    # - EXT1 sequences: {EXT1:0xXX} or {EXT1:XX}
+    # We use finditer to get matches in order of appearance
+
+    # Combined pattern for all text-producing elements
+    text_element_pattern = re.compile(
+        r'"([^"]*)"'  # Quoted text (group 1)
+        r"|"
+        r"\{P16:(?:0x)?([0-9A-Fa-f]{4})\}"  # P16 sequence (group 2)
+        r"|"
+        r"\{EXT1:(?:0x)?([0-9A-Fa-f]{2})\}"  # EXT1 sequence (group 3)
+    )
+
+    for match in text_element_pattern.finditer(content):
+        if match.group(1) is not None:
+            # Quoted text
+            result_parts.append(match.group(1))
+        elif match.group(2) is not None:
+            # P16 sequence - decode to Unicode
+            char = decode_p16_character(match.group(2))
+            if char:
+                result_parts.append(char)
+        elif match.group(3) is not None:
+            # EXT1 sequence - decode to character
+            char = decode_ext1_character(match.group(3))
+            if char:
+                result_parts.append(char)
+
+    # Also handle unclosed quotes at end of content (truncated files)
+    # Check if there's an unclosed quote after the last match
+    last_match_end = 0
+    for match in text_element_pattern.finditer(content):
+        last_match_end = match.end()
+
+    remaining = content[last_match_end:]
+    unclosed_match = re.search(r'"([^"]+)$', remaining)
+    if unclosed_match:
+        result_parts.append(unclosed_match.group(1))
+
+    return "".join(result_parts)
 
 
 def cea708_color_to_rgb(r: int, g: int, b: int) -> str:
@@ -76,143 +179,6 @@ def cea708_opacity_to_css(opacity: int | str) -> Any:
     return OPACITY_MAP.get(opacity.lower(), 1.0)
 
 
-def parse_708_style(content: str) -> Dict[str, Any]:
-    """
-    Extract style information from CEA-708 content.
-
-    Caption Inspector formats:
-    - SPA (Set Pen Attributes): {SPA:Pen-[Size:<size>,Offset:<offset>]:TextTag-<tag>:FontTag-<tag>:EdgeType-<type>:UL:IT}
-    - SPC (Set Pen Color): {SPC:FG-<opacity>-R<r>G<g>B<b>:BG-<opacity>-R<r>G<g>B<b>Edg-R<r>G<g>B<b>}
-    - Standalone RGB: R<r>G<g>B<b>
-
-    Args:
-        content: The content string containing style codes
-
-    Returns:
-        Dictionary with CSS-like styling rules
-    """
-    style = {}
-
-    # Parse SPC (Set Pen Color) command
-    # Format: {SPC:FG-<opacity>-R<r>G<g>B<b>:BG-<opacity>-R<r>G<g>B<b>Edg-R<r>G<g>B<b>}
-    spc_match = re.search(r"\{SPC:([^}]+)\}", content)
-    if spc_match:
-        spc_content = spc_match.group(1)
-
-        # Foreground color and opacity: FG-<opacity>-R<r>G<g>B<b>
-        fg_match = re.search(r"FG-(\w+)-R([0-3])G([0-3])B([0-3])", spc_content)
-        if fg_match:
-            opacity_str = fg_match.group(1)
-            r = int(fg_match.group(2))
-            g = int(fg_match.group(3))
-            b = int(fg_match.group(4))
-            style["color"] = cea708_color_to_rgb(r, g, b)
-            style["color_raw"] = {"r": r, "g": g, "b": b}
-            style["opacity"] = cea708_opacity_to_css(opacity_str)
-            style["opacity_raw"] = opacity_str.lower()
-
-        # Background color and opacity: BG-<opacity>-R<r>G<g>B<b>
-        bg_match = re.search(r"BG-(\w+)-R([0-3])G([0-3])B([0-3])", spc_content)
-        if bg_match:
-            opacity_str = bg_match.group(1)
-            r = int(bg_match.group(2))
-            g = int(bg_match.group(3))
-            b = int(bg_match.group(4))
-            style["background-color"] = cea708_color_to_rgb(r, g, b)
-            style["background_color_raw"] = {"r": r, "g": g, "b": b}
-            style["background_opacity"] = cea708_opacity_to_css(opacity_str)
-            style["background_opacity_raw"] = opacity_str.lower()
-
-        # Edge color: Edg-R<r>G<g>B<b>
-        edge_match = re.search(r"Edg-R([0-3])G([0-3])B([0-3])", spc_content)
-        if edge_match:
-            r = int(edge_match.group(1))
-            g = int(edge_match.group(2))
-            b = int(edge_match.group(3))
-            style["edge_color"] = cea708_color_to_rgb(r, g, b)
-            style["edge_color_raw"] = {"r": r, "g": g, "b": b}
-
-    # Parse SPA (Set Pen Attributes) command
-    # Format: {SPA:Pen-[Size:<size>,Offset:<offset>]:TextTag-<tag>:FontTag-<tag>:EdgeType-<type>:UL:IT}
-    spa_match = re.search(r"\{SPA:([^}]+)\}", content)
-    if spa_match:
-        spa_content = spa_match.group(1)
-
-        # Pen size: Size:<size>
-        size_match = re.search(r"Size:(\w+)", spa_content)
-        if size_match:
-            size = size_match.group(1).lower()
-            style["font-size"] = PEN_SIZE_MAP.get(size, size)
-
-        # Pen offset: Offset:<offset>
-        offset_match = re.search(r"Offset:(\w+)", spa_content)
-        if offset_match:
-            offset = offset_match.group(1).lower()
-            if offset in PEN_OFFSET_MAP and PEN_OFFSET_MAP[offset] != "normal":
-                style["vertical-align"] = PEN_OFFSET_MAP[offset]
-
-        # Text tag: TextTag-<tag>
-        text_tag_match = re.search(r"TextTag-([^:}]+)", spa_content)
-        if text_tag_match:
-            tag = text_tag_match.group(1).lower()
-            if tag in TEXT_TAG_MAP:
-                style["text_tag"] = TEXT_TAG_MAP[tag]
-            else:
-                style["text_tag"] = tag
-
-        # Font tag: FontTag-<tag>
-        font_tag_match = re.search(r"FontTag-([^:}]+)", spa_content)
-        if font_tag_match:
-            font = font_tag_match.group(1).lower()
-            if font in FONT_TAG_MAP and FONT_TAG_MAP[font]:
-                style["font-family"] = FONT_TAG_MAP[font]
-
-        # Edge type: EdgeType-<type>
-        edge_match = re.search(r"EdgeType-([^:}]+)", spa_content)
-        if edge_match:
-            edge = edge_match.group(1).lower()
-            if edge in EDGE_TYPE_MAP and EDGE_TYPE_MAP[edge]:
-                style["text-edge"] = EDGE_TYPE_MAP[edge]
-
-        # Underline: :UL
-        if ":UL" in spa_content or spa_content.endswith("UL"):
-            style["text-decoration"] = "underline"
-
-        # Italic: :IT
-        if ":IT" in spa_content or spa_content.endswith("IT"):
-            style["font-style"] = "italic"
-
-        # Bold: :BL
-        if ":BL" in spa_content or spa_content.endswith("BL"):
-            style["font-weight"] = "bold"
-
-    # Fallback: extract standalone RGB color (not in SPC command)
-    if "color" not in style:
-        # Look for RGB not preceded by FG-, BG-, or Edg-
-        rgb_match = re.search(
-            r"(?<!FG-)(?<!BG-)(?<!Edg-)R([0-3])G([0-3])B([0-3])", content
-        )
-        if rgb_match:
-            r = int(rgb_match.group(1))
-            g = int(rgb_match.group(2))
-            b = int(rgb_match.group(3))
-            style["color"] = cea708_color_to_rgb(r, g, b)
-            style["color_raw"] = {"r": r, "g": g, "b": b}
-
-    # Extract font from window definition pen style
-    # Format: Pen-<style> in DF command or standalone Pen-<style>
-    pen_match = re.search(r"(?:^|[:{])Pen-([A-Za-z]+)(?:[:-]|$|\})", content)
-    if not pen_match:
-        # Also try standalone format like "Pen-PropSans"
-        pen_match = re.search(r"^Pen-([A-Za-z]+)$", content)
-    if pen_match and "font-family" not in style:
-        font = pen_match.group(1).lower()
-        if font in FONT_TAG_MAP and FONT_TAG_MAP[font]:
-            style["font-family"] = FONT_TAG_MAP[font]
-
-    return style
-
-
 def parse_708_text_segments(
     content: str,
 ) -> tuple[str, Dict[str, Any] | None, List[Dict[str, Any]] | None]:
@@ -238,6 +204,12 @@ def parse_708_text_segments(
 
     # Find all quoted text and their positions
     text_pattern = re.compile(r'"([^"]*)"')
+    # Pattern for unclosed quotes at end of content (truncated files)
+    unclosed_text_pattern = re.compile(r'"([^"]+)$')
+
+    # Find P16 and EXT1 sequences (these appear OUTSIDE of quoted text)
+    p16_pattern = re.compile(r"\{P16:(?:0x)?([0-9A-Fa-f]{4})\}")
+    ext1_pattern = re.compile(r"\{EXT1:(?:0x)?([0-9A-Fa-f]{2})\}")
 
     # Find all SPL position markers
     spl_pattern = re.compile(r"\{SPL:R(\d+)-C(\d+)\}")
@@ -251,11 +223,31 @@ def parse_708_text_segments(
         cmd_content = match.group(2)
         events.append((match.start(), "style", (cmd_type, cmd_content)))
 
-    # Collect text segments
+    # Collect text segments (properly quoted)
     for match in text_pattern.finditer(content):
         text = match.group(1)
         if text:  # Skip empty strings
             events.append((match.start(), "text", text))
+
+    # Collect P16 sequences (decode to Unicode characters)
+    for match in p16_pattern.finditer(content):
+        char = decode_p16_character(match.group(1))
+        if char:
+            events.append((match.start(), "text", char))
+
+    # Collect EXT1 sequences (decode to characters)
+    for match in ext1_pattern.finditer(content):
+        char = decode_ext1_character(match.group(1))
+        if char:
+            events.append((match.start(), "text", char))
+
+    # Also capture unclosed quotes at end of content
+    unclosed_match = unclosed_text_pattern.search(content)
+    if unclosed_match:
+        # Check this wasn't already matched as a closed quote
+        unclosed_text = unclosed_match.group(1)
+        if unclosed_text and f'"{unclosed_text}"' not in content:
+            events.append((unclosed_match.start(), "text", unclosed_text))
 
     # Collect SPL position markers
     for match in spl_pattern.finditer(content):
@@ -349,6 +341,7 @@ def parse_708_text_segments(
 
         elif event_type == "text":
             text = data
+            # P16/EXT1 sequences are already decoded when collected as events
             segments.append(
                 {
                     "text": text,
@@ -410,6 +403,9 @@ def parse_708_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
     - After {SPL:R#-C#} tags (explicit position)
     - Before any SPL tag (uses row from window definition or default row 0)
 
+    Also decodes P16/EXT1 extended characters to Unicode (including sequences
+    that appear outside of quoted text).
+
     Args:
         content: The content string containing position codes and text
 
@@ -425,19 +421,18 @@ def parse_708_text_with_positions(content: str) -> tuple[str, List[Dict[str, Any
     # Pattern to match {SPL:R#-C#} followed by text in quotes
     segments = re.split(r"(?=\{SPL:R\d+-C\d+\})", content)
 
-    for i, segment in enumerate(segments):
+    for _, segment in enumerate(segments):
         if not segment.strip():
             continue
 
         # Extract row/column from this segment
         spl_match = re.search(r"\{SPL:R(\d+)-C(\d+)\}", segment)
-        # Extract text from this segment
-        text_matches = re.findall(r'"([^"]*)"', segment)
 
-        if text_matches:
-            text = " ".join(text_matches).strip()
-            if not text:
-                continue
+        # Extract text including P16/EXT1 sequences (which appear outside quotes)
+        text = extract_text_with_p16(segment)
+
+        if text and text.strip():
+            text = text.strip()
 
             if spl_match:
                 # Text after SPL tag - use explicit position

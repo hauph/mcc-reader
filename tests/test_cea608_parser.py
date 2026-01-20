@@ -1,61 +1,9 @@
 import pytest
 from MCCReader.parsers.cea608_parser import (
-    parse_608_style,
     parse_608_text_with_positions,
     parse_608_layout,
     parse_608_file,
 )
-
-
-class TestParse608Style:
-    """Tests for parse_608_style function."""
-
-    def test_extract_white_color(self):
-        """Should extract white foreground color."""
-        content = '{FG-White} "Hello"'
-        style = parse_608_style(content)
-        assert style["color"] == "white"
-
-    def test_extract_italic_style(self):
-        """Should extract italic style."""
-        content = '{FG-Italic-White} "Hello"'
-        style = parse_608_style(content)
-        assert style["font-style"] == "italic"
-        assert style["color"] == "white"
-
-    def test_extract_underline(self):
-        """Should extract underline from {UL} tag."""
-        content = '{UL} "Hello"'
-        style = parse_608_style(content)
-        assert style["text-decoration"] == "underline"
-
-    def test_extract_color_from_row_format(self):
-        """Should extract color from {R4:Yellow} format."""
-        content = '{R4:Yellow} "Hello"'
-        style = parse_608_style(content)
-        assert style["color"] == "yellow"
-
-    def test_extract_multiple_styles(self):
-        """Should extract multiple style attributes."""
-        content = '{FG-Italic-White} {UL} "Hello"'
-        style = parse_608_style(content)
-        assert style["color"] == "white"
-        assert style["font-style"] == "italic"
-        assert style["text-decoration"] == "underline"
-
-    def test_no_style_returns_empty(self):
-        """Should return empty dict when no style codes present."""
-        content = '"Just plain text"'
-        style = parse_608_style(content)
-        assert style == {}
-
-    def test_all_supported_colors(self):
-        """Should recognize all CEA-608 colors."""
-        colors = ["white", "green", "blue", "cyan", "red", "yellow", "magenta", "black"]
-        for color in colors:
-            content = f'{{FG-{color.capitalize()}}} "text"'
-            style = parse_608_style(content)
-            assert style["color"] == color
 
 
 class TestParse608TextWithPositions:
@@ -101,6 +49,22 @@ class TestParse608TextWithPositions:
         assert lines[0]["row"] == 14
         assert lines[1]["row"] == 15
         assert text == "Top\nBottom"
+
+    def test_unclosed_quote_at_end(self):
+        """Should extract text from unclosed quotes at end of content (truncated files)."""
+        content = '{R15:C4} {TO2} {TO2} "[bacround chter]'
+        text, lines = parse_608_text_with_positions(content)
+        assert text == "[bacround chter]"
+        assert len(lines) == 1
+        assert lines[0]["text"] == "[bacround chter]"
+
+    def test_mixed_closed_and_unclosed_quotes(self):
+        """Should handle both closed quotes and unclosed quote at end."""
+        content = '{R14:C0} "First line" {R15:C0} "Second line'
+        text, lines = parse_608_text_with_positions(content)
+        assert "First line" in text
+        assert "Second line" in text
+        assert len(lines) == 2
 
 
 class TestParse608Layout:
