@@ -130,7 +130,7 @@ Captions are returned as a list of dictionaries:
                     "end": 9075730,
                     "end_timecode": "00:00:09:02",
                     "text": "Hello World\nMy Name is Hau",
-                    "style": {"font-style": "italic", "color": "white"},
+                    "style": {"font-style": "italic", "color": "white"},  # or None if segments present
                     "layout": {
                         "row": 14,
                         "column": 8,
@@ -160,7 +160,7 @@ Captions are returned as a list of dictionaries:
                     "end": 9075730,
                     "end_timecode": "00:00:09:02",
                     "text": "Hello World\nMy Name is Hau",
-                    "style": {"font-family": "monospace, serif"},
+                    "style": {"font-family": "monospace, serif"},  # or None if segments present
                     "layout": {
                         "window_id": 0,
                         "mode": "pop-on",
@@ -224,6 +224,44 @@ Captions are returned as a list of dictionaries:
     }
 }
 ```
+
+### Multi-Style Captions (Segments)
+
+When a caption contains multiple styles (e.g., different colors within the same caption), the parser returns `segments` instead of a single `style`:
+
+```python
+# Single-style caption (most common): No `segments` field
+{
+    "text": "Hello world",
+    "style": {"color": "white"},
+}
+
+# Multi-style caption: `style` is `None`, `segments` contains list of `{text, style}` dicts
+{
+    "text": "Red text Green text",
+    "style": None,  # None when segments are present
+    "segments": [
+        {"text": "Red text ", "style": {"color": "red"}},
+        {"text": "Green text", "style": {"color": "green"}}
+    ]
+}
+
+# Mixed: styled and unstyled text: `style` is `None`, `segments` contains list of `{text, style}` dicts
+{
+    "text": "Blue intro Default text",
+    "style": None,
+    "segments": [
+        {"text": "Blue intro ", "style": {"color": "blue"}},
+        {"text": "Default text"}  # No style = default (white)
+    ]
+}
+```
+
+**Rules:**
+
+- **Single style**: Uses top-level `style` field.
+- **Multiple styles**: `style` is `None`, `segments` contains list of `{text, style}` dicts.
+- **Unstyled segment**: Segment dict has only `text` key (no `style` key).
 
 ## Development
 

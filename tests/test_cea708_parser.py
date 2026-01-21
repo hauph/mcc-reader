@@ -3,6 +3,7 @@ from MCCReader.parsers.cea708_parser import (
     cea708_color_to_rgb,
     cea708_opacity_to_css,
     parse_708_text_with_positions,
+    parse_708_text_segments,
     parse_708_layout,
     parse_708_file,
     decode_p16_character,
@@ -149,6 +150,95 @@ class TestCea708ColorToRgb:
         """Should convert R1G2B3 to custom color (#55AAFF)."""
         result = cea708_color_to_rgb(1, 2, 3)
         assert result == "#55AAFF"
+
+
+class TestParse708TextSegments:
+    """Tests for parse_708_text_segments function - style tracking."""
+
+    def test_single_style_returns_style_not_segments(self):
+        """Should return style dict and None segments for single-style text."""
+        content = '{SPC:FG-Solid-R0G0B3:BG-Solid-R0G0B0} "Blue text"'
+        text, style, segments = parse_708_text_segments(content)
+        assert text == "Blue text"
+        assert style is not None
+        assert style["color"] == "#0000FF"  # Blue
+        assert segments is None
+
+    def test_multiple_styles_returns_segments(self):
+        """Should return None style and segments list for multi-style text."""
+        content = '{SPC:FG-Solid-R3G0B0:BG-Solid-R0G0B0} "Red" {SPC:FG-Solid-R0G3B0:BG-Solid-R0G0B0} "Green"'
+        text, style, segments = parse_708_text_segments(content)
+        assert text == "RedGreen"
+        assert style is None
+        assert len(segments) == 2
+        assert segments[0]["text"] == "Red"
+        assert segments[0]["style"]["color"] == "#FF0000"  # Red
+        assert segments[1]["text"] == "Green"
+        assert segments[1]["style"]["color"] == "#00FF00"  # Green
+
+    def test_no_style_returns_none(self):
+        """Should return None for both style and segments when no style codes present."""
+        content = '"Plain text"'
+        text, style, segments = parse_708_text_segments(content)
+        assert text == "Plain text"
+        # When there's no style, both style and segments are None
+        assert style is None
+        assert segments is None
+
+    def test_font_from_df_tag(self):
+        """Should extract font-family from DF tag."""
+        content = '{DF0:PopUp-Cntrd:R1-C29:Pen-MonoSerif} "Text"'
+        _, style, _ = parse_708_text_segments(content)
+        assert style["font-family"] == "monospace, serif"
+
+    def test_italic_from_spa(self):
+        """Should parse italic from SPA command."""
+        content = '{SPA:Pen-[Size:Standard]:IT} "Italic text"'
+        _, style, _ = parse_708_text_segments(content)
+        assert style["font-style"] == "italic"
+
+    def test_underline_from_spa(self):
+        """Should parse underline from SPA command."""
+        content = '{SPA:Pen-[Size:Standard]:UL} "Underlined"'
+        _, style, _ = parse_708_text_segments(content)
+        assert style["text-decoration"] == "underline"
+
+    def test_style_change_creates_segments(self):
+        """Should create segments when style changes mid-caption."""
+        content = '{SPC:FG-Solid-R3G3B3:BG-Solid-R0G0B0} "White" {SPC:FG-Solid-R3G3B0:BG-Solid-R0G0B0} "Yellow"'
+        _, style, segments = parse_708_text_segments(content)
+        assert style is None
+        assert len(segments) == 2
+        assert segments[0]["style"]["color"] == "#FFFFFF"  # White
+        assert segments[1]["style"]["color"] == "#FFFF00"  # Yellow
+
+    def test_background_color(self):
+        """Should parse background color from SPC."""
+        content = '{SPC:FG-Solid-R3G3B3:BG-Solid-R3G0B0} "With red bg"'
+        _, style, _ = parse_708_text_segments(content)
+        assert style["background-color"] == "#FF0000"  # Red background
+
+    def test_opacity_solid(self):
+        """Should parse solid opacity."""
+        content = '{SPC:FG-Solid-R3G3B3:BG-Solid-R0G0B0} "Solid"'
+        _, style, _ = parse_708_text_segments(content)
+        assert style["opacity_raw"] == "solid"  # Raw opacity string
+
+    def test_empty_content(self):
+        """Should handle empty content."""
+        text, style, segments = parse_708_text_segments("")
+        assert text == ""
+        assert style is None
+        assert segments is None
+
+    def test_same_style_no_segments(self):
+        """Should not create segments when style stays the same."""
+        # Same style applied twice, followed by text
+        content = '{SPC:FG-Solid-R0G0B3:BG-Solid-R0G0B0} "Part1" "Part2"'
+        text, style, segments = parse_708_text_segments(content)
+        assert text == "Part1Part2"
+        assert style is not None  # Single style
+        assert segments is None
 
 
 class TestCea708OpacityToCss:
@@ -474,3 +564,36 @@ class TestParse708File:
         # Should contain: -2020. and Farsi text
         assert "2020" in captions[0]["text"]
         assert "است" in captions[0]["text"]  # Farsi word for "is"
+
+    def test_parse_with_multiple_styles_creates_segments(self, tmp_path):
+        """Should create segments when caption has multiple styles."""
+        file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 1
+00:00:01:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPC:FG-Solid-R3G0B0:BG-Solid-R0G0B0} "Red" {SPC:FG-Solid-R0G3B0:BG-Solid-R0G0B0} "Green"
+"""
+        test_file = tmp_path / "test.708"
+        test_file.write_text(file_content)
+
+        captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        assert captions[0]["style"] is None  # None when segments present
+        assert captions[0]["segments"] is not None
+        assert len(captions[0]["segments"]) == 2
+        assert captions[0]["segments"][0]["text"] == "Red"
+        assert captions[0]["segments"][0]["style"]["color"] == "#FF0000"
+        assert captions[0]["segments"][1]["text"] == "Green"
+        assert captions[0]["segments"][1]["style"]["color"] == "#00FF00"
+
+    def test_parse_with_single_style_no_segments(self, tmp_path):
+        """Should not create segments for single-style caption."""
+        file_content = """Decoded DTVCC / CEA-708 for Asset: test - Service: 1
+00:00:01:00 - {DLW:11111111} {DF0:PopUp-Cntrd:R0-C20:Anchor-UL-V65-H0:VIS} {SPC:FG-Solid-R0G0B3:BG-Solid-R0G0B0} "All blue text"
+"""
+        test_file = tmp_path / "test.708"
+        test_file.write_text(file_content)
+
+        captions = parse_708_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        assert captions[0]["style"]["color"] == "#0000FF"
+        assert captions[0].get("segments") is None

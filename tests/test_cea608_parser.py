@@ -1,9 +1,94 @@
 import pytest
 from MCCReader.parsers.cea608_parser import (
     parse_608_text_with_positions,
+    parse_608_text_segments,
     parse_608_layout,
     parse_608_file,
 )
+
+
+class TestParse608TextSegments:
+    """Tests for parse_608_text_segments function - style tracking."""
+
+    def test_single_style_returns_style_not_segments(self):
+        """Should return style dict and None segments for single-style text."""
+        content = '{FG-Blue} "Hello world"'
+        text, style, segments = parse_608_text_segments(content)
+        assert text == "Hello world"
+        assert style == {"color": "blue"}
+        assert segments is None
+
+    def test_multiple_styles_returns_segments(self):
+        """Should return None style and segments list for multi-style text."""
+        content = '{FG-Red} "Red text" {FG-Green} "Green text"'
+        text, style, segments = parse_608_text_segments(content)
+        assert text == "Red textGreen text"
+        assert style is None
+        assert len(segments) == 2
+        assert segments[0]["text"] == "Red text"
+        assert segments[0]["style"]["color"] == "red"
+        assert segments[1]["text"] == "Green text"
+        assert segments[1]["style"]["color"] == "green"
+
+    def test_no_style_returns_none(self):
+        """Should return None for both style and segments when no style codes present."""
+        content = '"Plain text"'
+        text, style, segments = parse_608_text_segments(content)
+        assert text == "Plain text"
+        # When there's no style, both style and segments are None
+        assert style is None
+        assert segments is None
+
+    def test_italic_white_style(self):
+        """Should parse italic white as combined style."""
+        content = '{FG-Italic-White} "Styled"'
+        _, style, _ = parse_608_text_segments(content)
+        assert style["font-style"] == "italic"
+        assert style["color"] == "white"
+
+    def test_background_color(self):
+        """Should parse background color."""
+        content = '{BG-Blue} "Text with bg"'
+        _, style, _ = parse_608_text_segments(content)
+        assert style["background-color"] == "blue"
+
+    def test_underline_style(self):
+        """Should parse underline flag."""
+        content = '{UL} "Underlined text"'
+        _, style, _ = parse_608_text_segments(content)
+        assert style["text-decoration"] == "underline"
+
+    def test_pac_color(self):
+        """Should parse PAC color codes."""
+        content = '{R14:Yellow} "Yellow text"'
+        _, style, _ = parse_608_text_segments(content)
+        assert style["color"] == "yellow"
+
+    def test_mixed_styled_and_unstyled(self):
+        """Should handle transition from styled to unstyled text."""
+        # When style changes to nothing, text continues with previous style
+        content = '{FG-Blue} "Blue" "More text"'
+        text, style, segments = parse_608_text_segments(content)
+        # Both segments have same style, so should be single style
+        assert text == "BlueMore text"
+        assert style == {"color": "blue"}
+        assert segments is None
+
+    def test_style_change_creates_segments(self):
+        """Should create segments when style changes mid-caption."""
+        content = '{FG-White} "White " {FG-Yellow} "Yellow"'
+        _, style, segments = parse_608_text_segments(content)
+        assert style is None
+        assert len(segments) == 2
+        assert segments[0]["style"]["color"] == "white"
+        assert segments[1]["style"]["color"] == "yellow"
+
+    def test_empty_content(self):
+        """Should handle empty content."""
+        text, style, segments = parse_608_text_segments("")
+        assert text == ""
+        assert style is None
+        assert segments is None
 
 
 class TestParse608TextWithPositions:
@@ -239,3 +324,38 @@ class TestParse608File:
         assert captions[0]["start_timecode"] == "00:01:32:00"
         # End time is None when unknown (no subsequent EOC/EDM)
         assert captions[0]["end_timecode"] is None
+
+    def test_parse_with_multiple_styles_creates_segments(self, tmp_path):
+        """Should create segments when caption has multiple styles."""
+        file_content = """Decoded Line 21 / CEA-608 for Asset: test - Channel: 1
+00:00:01:00 - {RCL} {R14:C8} {FG-Blue} "Blue text" {FG-White} "White text"
+00:00:02:00 - {EOC}
+"""
+        test_file = tmp_path / "test.608"
+        test_file.write_text(file_content)
+
+        captions = parse_608_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        assert captions[0]["style"] is None  # None when segments present
+        assert captions[0]["segments"] is not None
+        assert len(captions[0]["segments"]) == 2
+        assert captions[0]["segments"][0]["text"] == "Blue text"
+        assert captions[0]["segments"][0]["style"]["color"] == "blue"
+        assert captions[0]["segments"][1]["text"] == "White text"
+        assert captions[0]["segments"][1]["style"]["color"] == "white"
+
+    def test_parse_with_single_style_no_segments(self, tmp_path):
+        """Should not create segments for single-style caption."""
+        file_content = """Decoded Line 21 / CEA-608 for Asset: test - Channel: 1
+00:00:01:00 - {RCL} {R14:C8} {FG-Blue} "All blue text"
+00:00:02:00 - {EOC}
+"""
+        test_file = tmp_path / "test.608"
+        test_file.write_text(file_content)
+
+        captions = parse_608_file(str(test_file), fps=24.0, drop_frame=False)
+
+        assert len(captions) == 1
+        assert captions[0]["style"] == {"color": "blue"}
+        assert captions[0].get("segments") is None
